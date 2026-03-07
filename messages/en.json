@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "Home",
+    "portfolio": "Portfolio",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "home": {
+    "title": "Live Prices",
+    "subtitle": "Track crypto, stocks, CEDEARs, and USD/ARS rates in real time",
+    "lastUpdated": "Last updated"
+  },
+  "categories": {
+    "crypto": "Crypto",
+    "stocks": "Stocks",
+    "cedears": "CEDEARs",
+    "dolar": "Dollar"
+  },
+  "table": {
+    "rank": "#",
+    "name": "Name",
+    "price": "Price",
+    "change24h": "24h %",
+    "marketCap": "Market Cap",
+    "volume": "Volume",
+    "type": "Type",
+    "buy": "Buy",
+    "sell": "Sell",
+    "spread": "Spread",
+    "noData": "No data available",
+    "loading": "Loading prices..."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "en": "English",
+    "es": "Español"
+  }
+}

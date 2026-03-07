@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "portfolio": "Portafolio",
+    "login": "Iniciar sesion",
+    "logout": "Cerrar sesion"
+  },
+  "home": {
+    "title": "Cotizaciones en Vivo",
+    "subtitle": "Segui crypto, acciones, CEDEARs y dolar en tiempo real",
+    "lastUpdated": "Ultima actualizacion"
+  },
+  "categories": {
+    "crypto": "Crypto",
+    "stocks": "Acciones",
+    "cedears": "CEDEARs",
+    "dolar": "Dolar"
+  },
+  "table": {
+    "rank": "#",
+    "name": "Nombre",
+    "price": "Precio",
+    "change24h": "24h %",
+    "marketCap": "Cap. de Mercado",
+    "volume": "Volumen",
+    "type": "Tipo",
+    "buy": "Compra",
+    "sell": "Venta",
+    "spread": "Spread",
+    "noData": "Sin datos disponibles",
+    "loading": "Cargando cotizaciones..."
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "locale": {
+    "en": "English",
+    "es": "Español"
+  }
+}
