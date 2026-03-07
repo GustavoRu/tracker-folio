@@ -1,16 +1,20 @@
 import { CRYPTO_IDS, API_URLS } from "@/lib/constants";
 import type { Quote } from "@/types/quote";
 
-interface CoinGeckoPrice {
-  usd: number;
-  usd_24h_change?: number;
-  usd_market_cap?: number;
-  usd_24h_vol?: number;
+interface CoinGeckoMarket {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  price_change_percentage_24h: number | null;
+  market_cap: number | null;
+  total_volume: number | null;
 }
 
 export async function fetchCryptoPrices(): Promise<Quote[]> {
   const ids = CRYPTO_IDS.map((c) => c.id).join(",");
-  const url = `${API_URLS.coingecko}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
+  const url = `${API_URLS.coingecko}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&sparkline=false`;
 
   const headers: HeadersInit = { Accept: "application/json" };
   if (process.env.COINGECKO_API_KEY) {
@@ -23,36 +27,24 @@ export async function fetchCryptoPrices(): Promise<Quote[]> {
     throw new Error(`CoinGecko API error: ${res.status}`);
   }
 
-  const data: Record<string, CoinGeckoPrice> = await res.json();
+  const data: CoinGeckoMarket[] = await res.json();
+
+  // Build a lookup from the API response
+  const marketMap = new Map(data.map((coin) => [coin.id, coin]));
 
   return CRYPTO_IDS.map((coin, index) => {
-    const price = data[coin.id];
+    const market = marketMap.get(coin.id);
     return {
       symbol: coin.symbol,
       name: coin.name,
       category: "crypto" as const,
-      iconUrl: `https://assets.coingecko.com/coins/images/${getCoinImageId(coin.id)}/small/${coin.id}.png`,
-      price: price?.usd ?? 0,
-      priceChange24h: price?.usd_24h_change ?? null,
-      marketCap: price?.usd_market_cap ?? null,
-      volume24h: price?.usd_24h_vol ?? null,
+      iconUrl: market?.image ?? null,
+      price: market?.current_price ?? 0,
+      priceChange24h: market?.price_change_percentage_24h ?? null,
+      marketCap: market?.market_cap ?? null,
+      volume24h: market?.total_volume ?? null,
       currency: "USD" as const,
       rank: index + 1,
     };
   });
-}
-
-// Simplified - CoinGecko icon URLs vary, so we use a generic approach
-function getCoinImageId(id: string): string {
-  const map: Record<string, string> = {
-    bitcoin: "1",
-    ethereum: "279",
-    solana: "4128",
-    tether: "325",
-    binancecoin: "825",
-    ripple: "44",
-    cardano: "975",
-    dogecoin: "5",
-  };
-  return map[id] ?? "1";
 }
