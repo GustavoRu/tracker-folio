@@ -38,5 +38,56 @@
   "locale": {
     "en": "English",
     "es": "Español"
+  },
+  "auth": {
+    "loginTitle": "Bienvenido de nuevo",
+    "loginSubtitle": "Inicia sesion para acceder a tu portafolio",
+    "registerTitle": "Crear cuenta",
+    "registerSubtitle": "Empieza a trackear tus inversiones",
+    "email": "Email",
+    "emailPlaceholder": "tu@email.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Minimo 6 caracteres",
+    "loginButton": "Iniciar sesion",
+    "registerButton": "Crear cuenta",
+    "loading": "Cargando...",
+    "noAccount": "No tenes cuenta?",
+    "hasAccount": "Ya tenes cuenta?",
+    "registerLink": "Registrate",
+    "loginLink": "Inicia sesion",
+    "unknownError": "Ocurrio un error inesperado"
+  },
+  "portfolio": {
+    "title": "Mi Portafolio",
+    "subtitle": "Segui tus inversiones e historial de transacciones",
+    "addTransaction": "Agregar Transaccion",
+    "noTransactions": "Sin transacciones aun. Agrega la primera!",
+    "date": "Fecha",
+    "type": "Tipo",
+    "asset": "Activo",
+    "qty": "Cantidad",
+    "price": "Precio",
+    "totalCol": "Total",
+    "notesCol": "Notas",
+    "buyLabel": "Compra",
+    "sellLabel": "Venta",
+    "delete": "Eliminar"
+  },
+  "transaction": {
+    "addTitle": "Agregar Transaccion",
+    "buy": "Compra",
+    "sell": "Venta",
+    "asset": "Activo",
+    "searchAsset": "Buscar por nombre o ticker...",
+    "selectAssetError": "Selecciona un activo",
+    "quantity": "Cantidad",
+    "pricePerUnit": "Precio por unidad",
+    "currency": "Moneda",
+    "date": "Fecha",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "Ej: Comprado en Binance",
+    "total": "Total",
+    "save": "Guardar Transaccion",
+    "saving": "Guardando..."
   }
 }

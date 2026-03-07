@@ -88,3 +88,33 @@ export const API_URLS = {
   dolar: "https://dolarapi.com/v1/dolares",
   yahoo: "https://query1.finance.yahoo.com/v8/finance/chart",
 } as const;
+
+export interface AssetOption {
+  symbol: string;
+  name: string;
+  category: "crypto" | "stock" | "cedear" | "dolar";
+}
+
+export const ALL_ASSETS: AssetOption[] = [
+  ...CRYPTO_IDS.map((c) => ({
+    symbol: c.symbol,
+    name: c.name,
+    category: "crypto" as const,
+  })),
+  ...STOCK_TICKERS.map((s) => ({
+    symbol: s.ticker,
+    name: s.name,
+    category: "stock" as const,
+  })),
+  ...CEDEAR_TICKERS.map((c) => ({
+    symbol: c.symbol,
+    name: c.name,
+    category: "cedear" as const,
+  })),
+  ...DOLAR_TYPES.map((d) => ({
+    symbol: d.toUpperCase(),
+    name: DOLAR_LABELS[d],
+    category: "dolar" as const,
+  })),
+  { symbol: "USD", name: "Dolar (cash)", category: "dolar" as const },
+];

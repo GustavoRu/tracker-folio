@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
+import { AuthButton } from "@/components/auth/AuthButton";
 
 export function Header() {
   const t = useTranslations("nav");
@@ -25,8 +26,15 @@ export function Header() {
           >
             {t("home")}
           </Link>
+          <Link
+            href="/portfolio"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t("portfolio")}
+          </Link>
           <LocaleSwitcher />
           <ThemeToggle />
+          <AuthButton />
         </nav>
       </div>
     </header>

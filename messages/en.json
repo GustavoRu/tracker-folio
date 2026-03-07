@@ -38,5 +38,56 @@
   "locale": {
     "en": "English",
     "es": "Español"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to access your portfolio",
+    "registerTitle": "Create account",
+    "registerSubtitle": "Start tracking your investments",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "loginButton": "Sign in",
+    "registerButton": "Create account",
+    "loading": "Loading...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "registerLink": "Sign up",
+    "loginLink": "Sign in",
+    "unknownError": "An unexpected error occurred"
+  },
+  "portfolio": {
+    "title": "My Portfolio",
+    "subtitle": "Track your investments and transaction history",
+    "addTransaction": "Add Transaction",
+    "noTransactions": "No transactions yet. Add your first one!",
+    "date": "Date",
+    "type": "Type",
+    "asset": "Asset",
+    "qty": "Quantity",
+    "price": "Price",
+    "totalCol": "Total",
+    "notesCol": "Notes",
+    "buyLabel": "Buy",
+    "sellLabel": "Sell",
+    "delete": "Delete"
+  },
+  "transaction": {
+    "addTitle": "Add Transaction",
+    "buy": "Buy",
+    "sell": "Sell",
+    "asset": "Asset",
+    "searchAsset": "Search by name or ticker...",
+    "selectAssetError": "Please select an asset",
+    "quantity": "Quantity",
+    "pricePerUnit": "Price per unit",
+    "currency": "Currency",
+    "date": "Date",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "e.g. Bought on Binance",
+    "total": "Total",
+    "save": "Save Transaction",
+    "saving": "Saving..."
   }
 }
