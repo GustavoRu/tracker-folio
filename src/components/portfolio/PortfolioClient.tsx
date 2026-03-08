@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { usePortfolioPrices } from "@/hooks/usePortfolioPrices";
 import { AddTransactionModal } from "./AddTransactionModal";
 import { TransactionList } from "./TransactionList";
+import { PortfolioSummary } from "./PortfolioSummary";
+import { HoldingsTable } from "./HoldingsTable";
+import { AllocationChart } from "./AllocationChart";
+import type { Holding } from "@/lib/portfolio";
 
 interface TransactionRow {
   id: string;
@@ -21,14 +26,20 @@ interface TransactionRow {
 
 interface PortfolioClientProps {
   transactions: TransactionRow[];
+  holdings: Holding[];
 }
 
-export function PortfolioClient({ transactions }: PortfolioClientProps) {
+export function PortfolioClient({ transactions, holdings }: PortfolioClientProps) {
   const t = useTranslations("portfolio");
+  const ht = useTranslations("holdings");
   const [modalOpen, setModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"holdings" | "transactions">("holdings");
+
+  const { priceMap, dolarBlueVenta, isLoading } = usePortfolioPrices(holdings);
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
@@ -50,7 +61,70 @@ export function PortfolioClient({ transactions }: PortfolioClientProps) {
         </button>
       </div>
 
-      <TransactionList transactions={transactions} />
+      {/* Summary cards */}
+      {holdings.length > 0 && (
+        <PortfolioSummary
+          holdings={holdings}
+          priceMap={priceMap}
+          dolarBlueVenta={dolarBlueVenta}
+          isLoading={isLoading}
+        />
+      )}
+
+      {/* Allocation chart + Holdings/Transactions tabs */}
+      {holdings.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <AllocationChart
+              holdings={holdings}
+              priceMap={priceMap}
+              dolarBlueVenta={dolarBlueVenta}
+              isLoading={isLoading}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            {/* Tab switcher */}
+            <div className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
+              <button
+                onClick={() => setActiveTab("holdings")}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  activeTab === "holdings"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {ht("holdingsTab")}
+              </button>
+              <button
+                onClick={() => setActiveTab("transactions")}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  activeTab === "transactions"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {ht("transactionsTab")}
+              </button>
+            </div>
+
+            {activeTab === "holdings" ? (
+              <HoldingsTable
+                holdings={holdings}
+                priceMap={priceMap}
+                dolarBlueVenta={dolarBlueVenta}
+                isLoading={isLoading}
+              />
+            ) : (
+              <TransactionList transactions={transactions} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* If no holdings, just show transactions */}
+      {holdings.length === 0 && (
+        <TransactionList transactions={transactions} />
+      )}
 
       <AddTransactionModal
         open={modalOpen}

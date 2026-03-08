@@ -89,5 +89,23 @@
     "total": "Total",
     "save": "Guardar Transaccion",
     "saving": "Guardando..."
+  },
+  "holdings": {
+    "totalUSD": "Valor Total (USD)",
+    "totalARS": "Valor Total (ARS)",
+    "blueRate": "Dolar Blue",
+    "profitLoss": "Ganancia / Perdida",
+    "allocation": "Distribucion del Portafolio",
+    "holdingsTab": "Tenencias",
+    "transactionsTab": "Transacciones",
+    "noHoldings": "Sin tenencias. Agrega tu primera transaccion!",
+    "asset": "Activo",
+    "category": "Categoria",
+    "quantity": "Cantidad",
+    "avgCost": "Costo Prom.",
+    "currentPrice": "Precio Actual",
+    "valueUSD": "Valor USD",
+    "valueARS": "Valor ARS",
+    "pnl": "G/P %"
   }
 }

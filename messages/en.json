@@ -89,5 +89,23 @@
     "total": "Total",
     "save": "Save Transaction",
     "saving": "Saving..."
+  },
+  "holdings": {
+    "totalUSD": "Total Value (USD)",
+    "totalARS": "Total Value (ARS)",
+    "blueRate": "Blue Rate",
+    "profitLoss": "Profit / Loss",
+    "allocation": "Portfolio Allocation",
+    "holdingsTab": "Holdings",
+    "transactionsTab": "Transactions",
+    "noHoldings": "No holdings yet. Add your first transaction!",
+    "asset": "Asset",
+    "category": "Category",
+    "quantity": "Quantity",
+    "avgCost": "Avg. Cost",
+    "currentPrice": "Current Price",
+    "valueUSD": "Value USD",
+    "valueARS": "Value ARS",
+    "pnl": "P&L %"
   }
 }

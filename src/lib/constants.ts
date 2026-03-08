@@ -1,6 +1,6 @@
 export const POLLING_INTERVALS = {
   crypto: 30_000,
-  dolar: 30_000,
+  dolar: 60_000,
   stock: 60_000,
   cedear: 60_000,
 } as const;

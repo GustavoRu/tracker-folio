@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PortfolioClient } from "@/components/portfolio/PortfolioClient";
+import { computeHoldings } from "@/lib/portfolio";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,15 @@ export default async function PortfolioPage() {
       transacted_at,
       assets (
         symbol,
-        name
+        name,
+        category
       )
     `
     )
     .order("transacted_at", { ascending: false });
 
-  return <PortfolioClient transactions={(transactions as never[]) ?? []} />;
+  const txList = (transactions as never[]) ?? [];
+  const holdings = computeHoldings(txList);
+
+  return <PortfolioClient transactions={txList} holdings={holdings} />;
 }
