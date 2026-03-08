@@ -54,6 +54,7 @@ export function HoldingsTable({
             <th className="px-6 py-3 text-right">{t("valueUSD")}</th>
             <th className="px-6 py-3 text-right">{t("valueARS")}</th>
             <th className="px-6 py-3 text-right">{t("pnl")}</th>
+            <th className="px-6 py-3 text-right">{t("pnlUSD")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -121,6 +122,10 @@ export function HoldingsTable({
                 </td>
                 <td className={`px-6 py-4 text-right font-medium tabular-nums ${pnlColor}`}>
                   {formatPercent(pnlPct)}
+                </td>
+                <td className={`px-6 py-4 text-right font-medium tabular-nums ${pnlColor}`}>
+                  {(valueUSD - costUSD) >= 0 ? "+" : "-"}
+                  {formatCurrency(Math.abs(valueUSD - costUSD), "USD")}
                 </td>
               </tr>
             );

@@ -106,6 +106,7 @@
     "currentPrice": "Precio Actual",
     "valueUSD": "Valor USD",
     "valueARS": "Valor ARS",
-    "pnl": "G/P %"
+    "pnl": "G/P %",
+    "pnlUSD": "G/P USD"
   }
 }

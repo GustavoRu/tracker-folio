@@ -106,6 +106,7 @@
     "currentPrice": "Current Price",
     "valueUSD": "Value USD",
     "valueARS": "Value ARS",
-    "pnl": "P&L %"
+    "pnl": "P&L %",
+    "pnlUSD": "P&L USD"
   }
 }
