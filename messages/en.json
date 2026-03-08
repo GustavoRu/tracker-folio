@@ -62,6 +62,8 @@
     "subtitle": "Track your investments and transaction history",
     "addTransaction": "Add Transaction",
     "noTransactions": "No transactions yet. Add your first one!",
+    "emptyTitle": "Start tracking your investments",
+    "emptyDescription": "Add your first transaction to see your portfolio, performance, and asset allocation.",
     "date": "Date",
     "type": "Type",
     "asset": "Asset",

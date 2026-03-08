@@ -62,6 +62,8 @@
     "subtitle": "Segui tus inversiones e historial de transacciones",
     "addTransaction": "Agregar Transaccion",
     "noTransactions": "Sin transacciones aun. Agrega la primera!",
+    "emptyTitle": "Comienza a trackear tus inversiones",
+    "emptyDescription": "Agrega tu primera transaccion para ver tu portafolio, rendimiento y distribucion de activos.",
     "date": "Fecha",
     "type": "Tipo",
     "asset": "Activo",

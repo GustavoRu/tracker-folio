@@ -1,5 +1,5 @@
 import React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider, useMessages } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -21,9 +21,41 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrackerFolio - Live Prices & Portfolio Tracker",
+  title: {
+    default: "TrackerFolio - Live Prices & Portfolio Tracker",
+    template: "%s | TrackerFolio",
+  },
   description:
     "Track crypto, stocks, CEDEARs, and USD/ARS rates in real time. Manage your investment portfolio.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TrackerFolio",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "TrackerFolio",
+    title: "TrackerFolio - Live Prices & Portfolio Tracker",
+    description:
+      "Track crypto, stocks, CEDEARs, and USD/ARS rates in real time. Manage your investment portfolio.",
+  },
+  twitter: {
+    card: "summary",
+    title: "TrackerFolio - Live Prices & Portfolio Tracker",
+    description:
+      "Track crypto, stocks, CEDEARs, and USD/ARS rates in real time.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3b82f6",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export function generateStaticParams() {

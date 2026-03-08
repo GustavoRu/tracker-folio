@@ -18,34 +18,35 @@ async function fetchJSON<T>(url: string): Promise<T> {
 export function usePortfolioPrices(holdings: Holding[]) {
   const categories = new Set(holdings.map((h) => h.category));
 
+  // Use the same query keys as useQuotes/useDolar so the cache is shared
   const queries = useQueries({
     queries: [
       {
-        queryKey: ["portfolio-prices", "crypto"],
+        queryKey: ["quotes", "crypto"],
         queryFn: () => fetchJSON<Quote[]>("/api/quotes/crypto"),
         enabled: categories.has("crypto"),
-        staleTime: 15_000,
+        staleTime: 30_000,
         refetchInterval: 30_000,
       },
       {
-        queryKey: ["portfolio-prices", "stock"],
+        queryKey: ["quotes", "stock"],
         queryFn: () => fetchJSON<Quote[]>("/api/quotes/stocks?type=stock"),
         enabled: categories.has("stock"),
-        staleTime: 15_000,
+        staleTime: 30_000,
         refetchInterval: 60_000,
       },
       {
-        queryKey: ["portfolio-prices", "cedear"],
+        queryKey: ["quotes", "cedear"],
         queryFn: () => fetchJSON<Quote[]>("/api/quotes/stocks?type=cedear"),
         enabled: categories.has("cedear"),
-        staleTime: 15_000,
+        staleTime: 30_000,
         refetchInterval: 60_000,
       },
       {
-        queryKey: ["portfolio-prices", "dolar"],
+        queryKey: ["quotes", "dolar"],
         queryFn: () => fetchJSON<DolarQuote[]>("/api/quotes/dolar"),
         enabled: true,
-        staleTime: 15_000,
+        staleTime: 30_000,
         refetchInterval: 30_000,
       },
     ],

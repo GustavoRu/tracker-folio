@@ -27,6 +27,7 @@ export function useQuotes(category: Exclude<AssetCategory, "dolar">) {
   return useQuery<Quote[]>({
     queryKey: ["quotes", category],
     queryFn: () => fetchQuotes(category),
+    staleTime: 30_000,
     refetchInterval: POLLING_INTERVALS[category],
   });
 }
@@ -35,6 +36,7 @@ export function useDolar() {
   return useQuery<DolarQuote[]>({
     queryKey: ["quotes", "dolar"],
     queryFn: fetchDolar,
+    staleTime: 30_000,
     refetchInterval: POLLING_INTERVALS.dolar,
   });
 }

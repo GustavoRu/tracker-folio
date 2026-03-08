@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { formatCurrency } from "@/lib/utils";
 import type { Holding } from "@/lib/portfolio";
@@ -74,6 +75,9 @@ function PieSlice({
   startAngle,
   endAngle,
   color,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
   radius = 80,
   cx = 100,
   cy = 100,
@@ -81,6 +85,9 @@ function PieSlice({
   startAngle: number;
   endAngle: number;
   color: string;
+  isHovered: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
   radius?: number;
   cx?: number;
   cy?: number;
@@ -102,7 +109,18 @@ function PieSlice({
     "Z",
   ].join(" ");
 
-  return <path d={d} fill={color} className="transition-opacity hover:opacity-80" />;
+  return (
+    <path
+      d={d}
+      fill={color}
+      opacity={isHovered ? 0.8 : 1}
+      stroke={isHovered ? "var(--color-foreground)" : "none"}
+      strokeWidth={isHovered ? 1.5 : 0}
+      className="cursor-pointer transition-opacity"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    />
+  );
 }
 
 export function AllocationChart({
@@ -112,6 +130,7 @@ export function AllocationChart({
   isLoading,
 }: AllocationChartProps) {
   const t = useTranslations("holdings");
+  const [hoveredSymbol, setHoveredSymbol] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -132,32 +151,69 @@ export function AllocationChart({
     return acc;
   }, []);
 
+  const hoveredSlice = hoveredSymbol
+    ? slices.find((s) => s.symbol === hoveredSymbol)
+    : null;
+
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <h3 className="mb-4 text-sm font-medium text-muted-foreground">
         {t("allocation")}
       </h3>
       <div className="flex flex-col items-center gap-6 sm:flex-row">
-        {/* SVG Pie */}
-        <svg viewBox="0 0 200 200" className="h-48 w-48 shrink-0">
-          {arcs.map((arc) =>
-            arc.endAngle - arc.startAngle >= 0.5 ? (
-              <PieSlice
-                key={arc.symbol}
-                startAngle={arc.startAngle}
-                endAngle={arc.endAngle}
-                color={arc.color}
-              />
-            ) : null
-          )}
-          {/* Center hole for donut effect */}
-          <circle cx="100" cy="100" r="45" className="fill-card" />
-        </svg>
+        {/* SVG Pie with tooltip */}
+        <div className="relative shrink-0">
+          <svg viewBox="0 0 200 200" className="h-40 w-40 sm:h-48 sm:w-48">
+            {arcs.map((arc) =>
+              arc.endAngle - arc.startAngle >= 0.5 ? (
+                <PieSlice
+                  key={arc.symbol}
+                  startAngle={arc.startAngle}
+                  endAngle={arc.endAngle}
+                  color={arc.color}
+                  isHovered={hoveredSymbol === arc.symbol}
+                  onMouseEnter={() => setHoveredSymbol(arc.symbol)}
+                  onMouseLeave={() => setHoveredSymbol(null)}
+                />
+              ) : null
+            )}
+            {/* Center hole for donut effect */}
+            <circle cx="100" cy="100" r="45" className="fill-card" />
+            {/* Center text on hover */}
+            {hoveredSlice && (
+              <>
+                <text
+                  x="100"
+                  y="95"
+                  textAnchor="middle"
+                  className="fill-foreground text-[11px] font-semibold"
+                >
+                  {hoveredSlice.symbol}
+                </text>
+                <text
+                  x="100"
+                  y="112"
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[9px]"
+                >
+                  {formatCurrency(hoveredSlice.valueUSD, "USD")}
+                </text>
+              </>
+            )}
+          </svg>
+        </div>
 
         {/* Legend */}
         <div className="flex w-full flex-col gap-3">
           {slices.map((slice) => (
-            <div key={slice.symbol} className="flex items-start gap-2">
+            <div
+              key={slice.symbol}
+              className={`flex items-start gap-2 rounded-md px-1.5 py-0.5 transition-colors ${
+                hoveredSymbol === slice.symbol ? "bg-muted" : ""
+              }`}
+              onMouseEnter={() => setHoveredSymbol(slice.symbol)}
+              onMouseLeave={() => setHoveredSymbol(null)}
+            >
               <div
                 className="mt-1 h-3 w-3 shrink-0 rounded-sm"
                 style={{ backgroundColor: slice.color }}
