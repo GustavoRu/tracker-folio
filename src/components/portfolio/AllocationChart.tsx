@@ -123,13 +123,14 @@ export function AllocationChart({
 
   if (slices.length === 0) return null;
 
-  let currentAngle = 0;
-  const arcs = slices.map((slice) => {
-    const start = currentAngle;
+  const arcs = slices.reduce<
+    (Slice & { startAngle: number; endAngle: number })[]
+  >((acc, slice) => {
+    const start = acc.length > 0 ? acc[acc.length - 1].endAngle : 0;
     const sweep = (slice.percent / 100) * 360;
-    currentAngle += sweep;
-    return { ...slice, startAngle: start, endAngle: start + sweep };
-  });
+    acc.push({ ...slice, startAngle: start, endAngle: start + sweep });
+    return acc;
+  }, []);
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -154,22 +155,26 @@ export function AllocationChart({
         </svg>
 
         {/* Legend */}
-        <div className="flex w-full flex-col gap-2.5">
+        <div className="flex w-full flex-col gap-3">
           {slices.map((slice) => (
-            <div key={slice.symbol} className="flex items-center gap-2 min-w-0">
+            <div key={slice.symbol} className="flex items-start gap-2">
               <div
-                className="h-3 w-3 shrink-0 rounded-sm"
+                className="mt-1 h-3 w-3 shrink-0 rounded-sm"
                 style={{ backgroundColor: slice.color }}
               />
-              <span className="shrink-0 text-sm font-medium text-foreground">
-                {slice.symbol}
-              </span>
-              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                {slice.percent.toFixed(1)}%
-              </span>
-              <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                {formatCurrency(slice.valueUSD, "USD")}
-              </span>
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    {slice.symbol}
+                  </span>
+                  <span className="text-sm tabular-nums text-muted-foreground">
+                    {slice.percent.toFixed(1)}%
+                  </span>
+                </div>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {formatCurrency(slice.valueUSD, "USD")}
+                </span>
+              </div>
             </div>
           ))}
         </div>
