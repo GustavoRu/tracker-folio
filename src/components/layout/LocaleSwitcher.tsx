@@ -16,13 +16,13 @@ export function LocaleSwitcher() {
   return (
     <button
       onClick={toggleLocale}
-      className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-card-hover"
+      className="flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2 text-xs font-medium text-foreground transition-colors hover:bg-card-hover sm:h-9 sm:gap-1.5 sm:px-3 sm:text-sm"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
         fill="currentColor"
-        className="h-4 w-4"
+        className="h-3.5 w-3.5 sm:h-4 sm:w-4"
       >
         <path
           fillRule="evenodd"
