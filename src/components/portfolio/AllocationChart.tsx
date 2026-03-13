@@ -160,10 +160,10 @@ export function AllocationChart({
       <h3 className="mb-4 text-sm font-medium text-muted-foreground">
         {t("allocation")}
       </h3>
-      <div className="flex flex-col items-center gap-6 sm:flex-row">
-        {/* SVG Pie with tooltip */}
+      {/* Desktop: pie + legend side by side */}
+      <div className="hidden items-center gap-6 sm:flex">
         <div className="relative shrink-0">
-          <svg viewBox="0 0 200 200" className="h-48 w-48 sm:h-56 sm:w-56">
+          <svg viewBox="0 0 200 200" className="h-56 w-56">
             {arcs.map((arc) =>
               arc.endAngle - arc.startAngle >= 0.5 ? (
                 <PieSlice
@@ -177,9 +177,7 @@ export function AllocationChart({
                 />
               ) : null
             )}
-            {/* Center hole for donut effect */}
             <circle cx="100" cy="100" r="45" className="fill-card" />
-            {/* Center text on hover */}
             {hoveredSlice && (
               <>
                 <text
@@ -202,9 +200,7 @@ export function AllocationChart({
             )}
           </svg>
         </div>
-
-        {/* Legend */}
-        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid w-full grid-cols-2 gap-3 lg:grid-cols-3">
           {slices.map((slice) => (
             <div
               key={slice.symbol}
@@ -229,6 +225,41 @@ export function AllocationChart({
                 </div>
                 <span className="text-xs tabular-nums text-muted-foreground">
                   {formatCurrency(slice.valueUSD, "USD")}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile: compact horizontal bar + list */}
+      <div className="sm:hidden">
+        {/* Mini stacked bar */}
+        <div className="mb-4 flex h-3 overflow-hidden rounded-full">
+          {slices.map((slice) => (
+            <div
+              key={slice.symbol}
+              style={{ width: `${slice.percent}%`, backgroundColor: slice.color }}
+            />
+          ))}
+        </div>
+        {/* Compact legend list */}
+        <div className="space-y-2">
+          {slices.map((slice) => (
+            <div key={slice.symbol} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ backgroundColor: slice.color }}
+                />
+                <span className="text-sm font-medium text-foreground">{slice.symbol}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm tabular-nums text-foreground">
+                  {formatCurrency(slice.valueUSD, "USD")}
+                </span>
+                <span className="w-14 text-right text-xs tabular-nums text-muted-foreground">
+                  {slice.percent.toFixed(1)}%
                 </span>
               </div>
             </div>
