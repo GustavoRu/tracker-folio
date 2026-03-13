@@ -163,7 +163,7 @@ export function AllocationChart({
       <div className="flex flex-col items-center gap-6 sm:flex-row">
         {/* SVG Pie with tooltip */}
         <div className="relative shrink-0">
-          <svg viewBox="0 0 200 200" className="h-40 w-40 sm:h-48 sm:w-48">
+          <svg viewBox="0 0 200 200" className="h-48 w-48 sm:h-56 sm:w-56">
             {arcs.map((arc) =>
               arc.endAngle - arc.startAngle >= 0.5 ? (
                 <PieSlice
@@ -204,7 +204,7 @@ export function AllocationChart({
         </div>
 
         {/* Legend */}
-        <div className="flex w-full flex-col gap-3">
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {slices.map((slice) => (
             <div
               key={slice.symbol}

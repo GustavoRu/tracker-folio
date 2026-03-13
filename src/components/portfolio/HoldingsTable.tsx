@@ -17,6 +17,7 @@ interface HoldingsTableProps {
   priceMap: Map<string, PriceInfo>;
   dolarBlueVenta: number;
   isLoading: boolean;
+  onSelectAsset?: (symbol: string) => void;
 }
 
 export function HoldingsTable({
@@ -24,6 +25,7 @@ export function HoldingsTable({
   priceMap,
   dolarBlueVenta,
   isLoading,
+  onSelectAsset,
 }: HoldingsTableProps) {
   const t = useTranslations("holdings");
 
@@ -87,7 +89,8 @@ export function HoldingsTable({
             return (
               <tr
                 key={h.symbol}
-                className="transition-colors hover:bg-card-hover"
+                onClick={() => onSelectAsset?.(h.symbol)}
+                className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""}`}
               >
                 <td className="px-6 py-4">
                   <div>

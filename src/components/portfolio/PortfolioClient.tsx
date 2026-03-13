@@ -8,6 +8,7 @@ import { TransactionList } from "./TransactionList";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { HoldingsTable } from "./HoldingsTable";
 import { AllocationChart } from "./AllocationChart";
+import { AssetDetailView } from "./AssetDetailView";
 import type { Holding } from "@/lib/portfolio";
 
 interface TransactionRow {
@@ -34,8 +35,22 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
   const ht = useTranslations("holdings");
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"holdings" | "transactions">("holdings");
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
   const { priceMap, dolarBlueVenta, isLoading } = usePortfolioPrices(holdings);
+
+  const handleTabChange = (tab: "holdings" | "transactions") => {
+    setActiveTab(tab);
+    setSelectedAsset(null);
+  };
+
+  const selectedHolding = selectedAsset
+    ? holdings.find((h) => h.symbol === selectedAsset)
+    : null;
+
+  const filteredTransactions = selectedAsset
+    ? transactions.filter((tx) => tx.assets.symbol === selectedAsset)
+    : transactions;
 
   return (
     <div className="space-y-6">
@@ -88,53 +103,64 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
         />
       )}
 
-      {/* Allocation chart + Holdings/Transactions tabs */}
+      {/* Allocation chart - full width */}
       {holdings.length > 0 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <AllocationChart
-              holdings={holdings}
-              priceMap={priceMap}
-              dolarBlueVenta={dolarBlueVenta}
-              isLoading={isLoading}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            {/* Tab switcher */}
-            <div className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
-              <button
-                onClick={() => setActiveTab("holdings")}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                  activeTab === "holdings"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {ht("holdingsTab")}
-              </button>
-              <button
-                onClick={() => setActiveTab("transactions")}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                  activeTab === "transactions"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {ht("transactionsTab")}
-              </button>
-            </div>
+        <AllocationChart
+          holdings={holdings}
+          priceMap={priceMap}
+          dolarBlueVenta={dolarBlueVenta}
+          isLoading={isLoading}
+        />
+      )}
 
-            {activeTab === "holdings" ? (
+      {/* Tab switcher + content */}
+      {holdings.length > 0 && (
+        <div>
+          {/* Tab switcher */}
+          <div className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
+            <button
+              onClick={() => handleTabChange("holdings")}
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                activeTab === "holdings"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {ht("holdingsTab")}
+            </button>
+            <button
+              onClick={() => handleTabChange("transactions")}
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                activeTab === "transactions"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {ht("transactionsTab")}
+            </button>
+          </div>
+
+          {activeTab === "holdings" ? (
+            selectedHolding ? (
+              <AssetDetailView
+                holding={selectedHolding}
+                priceInfo={priceMap.get(selectedAsset!)}
+                dolarBlueVenta={dolarBlueVenta}
+                transactions={filteredTransactions}
+                onBack={() => setSelectedAsset(null)}
+              />
+            ) : (
               <HoldingsTable
                 holdings={holdings}
                 priceMap={priceMap}
                 dolarBlueVenta={dolarBlueVenta}
                 isLoading={isLoading}
+                onSelectAsset={setSelectedAsset}
               />
-            ) : (
-              <TransactionList transactions={transactions} />
-            )}
-          </div>
+            )
+          ) : (
+            <TransactionList transactions={transactions} />
+          )}
         </div>
       )}
 

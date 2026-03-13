@@ -73,7 +73,11 @@
     "notesCol": "Notes",
     "buyLabel": "Buy",
     "sellLabel": "Sell",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete transaction",
+    "deleteConfirmMessage": "Are you sure you want to delete this transaction?",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete"
   },
   "transaction": {
     "addTitle": "Add Transaction",
@@ -109,6 +113,12 @@
     "valueUSD": "Value USD",
     "valueARS": "Value ARS",
     "pnl": "P&L %",
-    "pnlUSD": "P&L USD"
+    "pnlUSD": "P&L USD",
+    "back": "Back",
+    "totalCost": "Total cost",
+    "holdingsLabel": "Holdings",
+    "assetTransactions": "Transactions",
+    "currentValue": "Current value",
+    "quantityLabel": "Quantity"
   }
 }
