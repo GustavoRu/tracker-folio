@@ -49,6 +49,8 @@ export const STOCK_TICKERS = [
   { ticker: "HD", name: "Home Depot" },
   { ticker: "NFLX", name: "Netflix" },
   { ticker: "CRM", name: "Salesforce" },
+  { ticker: "AMD", name: "AMD" },
+  { ticker: "MELI", name: "MercadoLibre Inc." },
 ] as const;
 
 export const CEDEAR_TICKERS = [
