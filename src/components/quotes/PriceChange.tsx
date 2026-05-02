@@ -15,8 +15,8 @@ export function PriceChange({ value }: PriceChangeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 text-sm font-medium",
-        isPositive ? "text-gain" : "text-loss"
+        "inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 font-mono text-sm font-medium",
+        isPositive ? "bg-gain/10 text-gain" : "bg-loss/10 text-loss"
       )}
     >
       <svg

@@ -32,16 +32,16 @@ export function QuotesTable({ category }: QuotesTableProps) {
       <table className="w-full">
         <thead>
           <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <th className="px-6 py-3 w-12">{t("rank")}</th>
-            <th className="px-6 py-3">{t("name")}</th>
-            <th className="px-6 py-3 text-right">{t("price")}</th>
-            <th className="px-6 py-3 text-right">{t("change24h")}</th>
+            <th className="w-10 px-4 py-3 text-center sm:px-6">{t("rank")}</th>
+            <th className="px-4 py-3 sm:px-6">{t("name")}</th>
+            <th className="px-4 py-3 text-right sm:px-6">{t("price")}</th>
+            <th className="px-4 py-3 text-right sm:px-6">{t("change24h")}</th>
             {category === "crypto" && (
               <>
-                <th className="hidden px-6 py-3 text-right md:table-cell">
+                <th className="hidden px-4 py-3 text-right md:table-cell sm:px-6">
                   {t("marketCap")}
                 </th>
-                <th className="hidden px-6 py-3 text-right md:table-cell">
+                <th className="hidden px-4 py-3 text-right md:table-cell sm:px-6">
                   {t("volume")}
                 </th>
               </>
@@ -54,10 +54,10 @@ export function QuotesTable({ category }: QuotesTableProps) {
               key={quote.symbol}
               className="transition-colors hover:bg-card-hover"
             >
-              <td className="px-6 py-4 text-sm text-muted-foreground">
+              <td className="px-4 py-4 text-center font-mono text-sm tabular-nums text-muted-foreground sm:px-6">
                 {quote.rank}
               </td>
-              <td className="px-6 py-4">
+              <td className="px-4 py-4 sm:px-6">
                 <div className="flex items-center gap-3">
                   {quote.iconUrl ? (
                     <img
@@ -79,20 +79,20 @@ export function QuotesTable({ category }: QuotesTableProps) {
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 text-right font-medium tabular-nums text-foreground">
+              <td className="px-4 py-4 text-right font-mono font-medium tabular-nums text-foreground sm:px-6">
                 {formatCurrency(quote.price, currency)}
               </td>
-              <td className="px-6 py-4 text-right">
+              <td className="px-4 py-4 text-right sm:px-6">
                 <PriceChange value={quote.priceChange24h} />
               </td>
               {category === "crypto" && (
                 <>
-                  <td className="hidden px-6 py-4 text-right text-sm text-muted-foreground md:table-cell">
+                  <td className="hidden px-4 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground md:table-cell sm:px-6">
                     {quote.marketCap
                       ? `$${formatCompact(quote.marketCap)}`
                       : "-"}
                   </td>
-                  <td className="hidden px-6 py-4 text-right text-sm text-muted-foreground md:table-cell">
+                  <td className="hidden px-4 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground md:table-cell sm:px-6">
                     {quote.volume24h
                       ? `$${formatCompact(quote.volume24h)}`
                       : "-"}

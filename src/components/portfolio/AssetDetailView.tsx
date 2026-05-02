@@ -40,7 +40,6 @@ export function AssetDetailView({
   const currentPrice = priceInfo?.currentPrice ?? 0;
   const priceCurrency = priceInfo?.currency ?? "USD";
 
-  // Value in USD
   let valueUSD: number;
   if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
     valueUSD = (holding.quantity * currentPrice) / dolarBlueVenta;
@@ -48,7 +47,6 @@ export function AssetDetailView({
     valueUSD = holding.quantity * currentPrice;
   }
 
-  // Cost in USD for P&L
   let costUSD: number;
   if (holding.costCurrency === "ARS" && dolarBlueVenta > 0) {
     costUSD = holding.totalCost / dolarBlueVenta;
@@ -58,7 +56,8 @@ export function AssetDetailView({
 
   const pnlUSD = valueUSD - costUSD;
   const pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
-  const pnlColor = pnlPct >= 0 ? "text-gain" : "text-loss";
+  const isGain = pnlPct >= 0;
+  const pnlColor = isGain ? "text-gain" : "text-loss";
 
   return (
     <div className="space-y-6">
@@ -66,7 +65,7 @@ export function AssetDetailView({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
@@ -82,16 +81,16 @@ export function AssetDetailView({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {/* Current Price */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("currentPrice")}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("currentPrice")}</p>
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {currentPrice > 0 ? formatCurrency(currentPrice, priceCurrency) : "-"}
           </p>
         </div>
 
         {/* Quantity */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("quantityLabel")}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("quantityLabel")}</p>
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {holding.quantity.toLocaleString(undefined, {
               minimumFractionDigits: 0,
               maximumFractionDigits: 8,
@@ -101,35 +100,35 @@ export function AssetDetailView({
 
         {/* Current Value */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("currentValue")}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("currentValue")}</p>
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {formatCurrency(valueUSD, "USD")}
           </p>
         </div>
 
         {/* Total Cost */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("totalCost")}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("totalCost")}</p>
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {formatCurrency(costUSD, "USD")}
           </p>
         </div>
 
         {/* Avg Cost */}
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("avgCost")}</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("avgCost")}</p>
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {formatCurrency(holding.avgCostPerUnit, holding.costCurrency)}
           </p>
         </div>
 
         {/* P&L */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t("pnl")}</p>
-          <p className={`mt-1 text-lg font-semibold tabular-nums ${pnlColor}`}>
+        <div className={`rounded-xl border border-border p-4 border-l-4 ${isGain ? "border-l-gain bg-gain/5" : "border-l-loss bg-loss/5"}`}>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("pnl")}</p>
+          <p className={`mt-1 font-mono text-lg font-semibold tabular-nums ${pnlColor}`}>
             {formatPercent(pnlPct)}
           </p>
-          <p className={`text-sm tabular-nums ${pnlColor}`}>
+          <p className={`font-mono text-sm tabular-nums ${pnlColor}`}>
             {pnlUSD >= 0 ? "+" : "-"}{formatCurrency(Math.abs(pnlUSD), "USD")}
           </p>
         </div>
@@ -137,7 +136,7 @@ export function AssetDetailView({
 
       {/* Transactions for this asset */}
       <div>
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+        <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("assetTransactions")}
         </h3>
         <TransactionList transactions={transactions} />

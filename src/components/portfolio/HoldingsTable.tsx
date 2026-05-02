@@ -12,6 +12,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   dolar: "Dolar",
 };
 
+const CATEGORY_BADGE_STYLES: Record<string, string> = {
+  crypto: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+  stock: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  cedear: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  dolar: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+};
+
 interface HoldingsTableProps {
   holdings: Holding[];
   priceMap: Map<string, PriceInfo>;
@@ -65,7 +72,6 @@ export function HoldingsTable({
             const currentPrice = price?.currentPrice ?? 0;
             const priceCurrency = price?.currency ?? "USD";
 
-            // Value in USD
             let valueUSD: number;
             if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
               valueUSD = (h.quantity * currentPrice) / dolarBlueVenta;
@@ -75,7 +81,6 @@ export function HoldingsTable({
 
             const valueARS = valueUSD * dolarBlueVenta;
 
-            // Cost in USD for P&L
             let costUSD: number;
             if (h.costCurrency === "ARS" && dolarBlueVenta > 0) {
               costUSD = h.totalCost / dolarBlueVenta;
@@ -84,7 +89,10 @@ export function HoldingsTable({
             }
 
             const pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
-            const pnlColor = pnlPct >= 0 ? "text-gain" : "text-loss";
+            const isGain = pnlPct >= 0;
+            const pnlColor = isGain ? "text-gain" : "text-loss";
+            const pnlAbsolute = valueUSD - costUSD;
+            const badgeStyle = CATEGORY_BADGE_STYLES[h.category] ?? "bg-muted text-muted-foreground";
 
             return (
               <tr
@@ -99,36 +107,38 @@ export function HoldingsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${badgeStyle}`}>
                     {CATEGORY_LABELS[h.category] ?? h.category}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right font-medium tabular-nums text-foreground">
+                <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
                   {h.quantity.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 8,
                   })}
                 </td>
-                <td className="px-6 py-4 text-right text-sm tabular-nums text-muted-foreground">
+                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
                   {formatCurrency(h.avgCostPerUnit, h.costCurrency)}
                 </td>
-                <td className="px-6 py-4 text-right text-sm tabular-nums text-foreground">
+                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-foreground">
                   {currentPrice > 0
                     ? formatCurrency(currentPrice, priceCurrency)
                     : "-"}
                 </td>
-                <td className="px-6 py-4 text-right font-medium tabular-nums text-foreground">
+                <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
                   {formatCurrency(valueUSD, "USD")}
                 </td>
-                <td className="px-6 py-4 text-right text-sm tabular-nums text-muted-foreground">
+                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
                   {dolarBlueVenta > 0 ? formatCurrency(valueARS, "ARS") : "-"}
                 </td>
-                <td className={`px-6 py-4 text-right font-medium tabular-nums ${pnlColor}`}>
-                  {formatPercent(pnlPct)}
+                <td className="px-6 py-4 text-right">
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-medium tabular-nums ${isGain ? "bg-gain/10 text-gain" : "bg-loss/10 text-loss"}`}>
+                    {formatPercent(pnlPct)}
+                  </span>
                 </td>
-                <td className={`px-6 py-4 text-right font-medium tabular-nums ${pnlColor}`}>
-                  {(valueUSD - costUSD) >= 0 ? "+" : "-"}
-                  {formatCurrency(Math.abs(valueUSD - costUSD), "USD")}
+                <td className={`px-6 py-4 text-right font-mono font-medium tabular-nums ${pnlColor}`}>
+                  {pnlAbsolute >= 0 ? "+" : "-"}
+                  {formatCurrency(Math.abs(pnlAbsolute), "USD")}
                 </td>
               </tr>
             );
