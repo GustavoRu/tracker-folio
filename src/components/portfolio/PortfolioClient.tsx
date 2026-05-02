@@ -194,6 +194,7 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
       <AddTransactionModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        holdings={holdings}
       />
     </div>
   );

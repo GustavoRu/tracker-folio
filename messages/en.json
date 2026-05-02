@@ -93,6 +93,11 @@
     "notes": "Notes (optional)",
     "notesPlaceholder": "e.g. Bought on Binance",
     "total": "Total",
+    "totalSpent": "Total spent",
+    "deductFrom": "Deduct from",
+    "creditTo": "Credit to",
+    "noCounterpart": "No counterpart",
+    "invalidAmounts": "Enter valid quantity and price",
     "save": "Save Transaction",
     "saving": "Saving..."
   },
@@ -119,6 +124,8 @@
     "holdingsLabel": "Holdings",
     "assetTransactions": "Transactions",
     "currentValue": "Current value",
-    "quantityLabel": "Quantity"
+    "quantityLabel": "Quantity",
+    "closedPosition": "Closed",
+    "realizedPnl": "Realized P&L"
   }
 }

@@ -5,22 +5,28 @@ import { useTranslations } from "next-intl";
 import { addTransaction } from "@/app/[locale]/(private)/portfolio/actions";
 import { AssetCombobox } from "@/components/ui/AssetCombobox";
 import type { AssetOption } from "@/lib/constants";
+import type { Holding } from "@/lib/portfolio";
+
+const STABLECOINS = ["USDT", "USDC", "USD"];
 
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
+  holdings?: Holding[];
 }
 
-export function AddTransactionModal({ open, onClose }: AddTransactionModalProps) {
+export function AddTransactionModal({ open, onClose, holdings }: AddTransactionModalProps) {
   const t = useTranslations("transaction");
 
   const [type, setType] = useState<"buy" | "sell">("buy");
   const [selectedAsset, setSelectedAsset] = useState<AssetOption | null>(null);
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  const [total, setTotal] = useState("");
   const [currency, setCurrency] = useState<"USD" | "ARS">("USD");
   const [notes, setNotes] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [counterpart, setCounterpart] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,11 +37,62 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
     setSelectedAsset(null);
     setQuantity("");
     setPrice("");
+    setTotal("");
     setCurrency("USD");
     setNotes("");
     setDate(new Date().toISOString().split("T")[0]);
+    setCounterpart("");
     setError(null);
   };
+
+  // Bidirectional total calculation — each handler derives the third value
+  const handleQuantityChange = (val: string) => {
+    setQuantity(val);
+    const q = parseFloat(val);
+    const p = parseFloat(price);
+    if (!isNaN(q) && !isNaN(p) && q >= 0 && p >= 0) {
+      setTotal((q * p).toFixed(2));
+    }
+  };
+
+  const handlePriceChange = (val: string) => {
+    setPrice(val);
+    const q = parseFloat(quantity);
+    const p = parseFloat(val);
+    if (!isNaN(q) && !isNaN(p) && q >= 0 && p >= 0) {
+      setTotal((q * p).toFixed(2));
+    }
+  };
+
+  const handleTotalChange = (val: string) => {
+    setTotal(val);
+    const tot = parseFloat(val);
+    const q = parseFloat(quantity);
+    const p = parseFloat(price);
+    if (!isNaN(tot) && tot > 0) {
+      if (!isNaN(q) && q > 0) {
+        setPrice((tot / q).toFixed(8));
+      } else if (!isNaN(p) && p > 0) {
+        setQuantity((tot / p).toFixed(8));
+      }
+    }
+  };
+
+  // Stablecoin counterpart options — only stablecoins with positive balance, excluding the selected asset
+  const availableStablecoins = (holdings ?? [])
+    .filter(
+      (h) =>
+        h.quantity > 0 &&
+        STABLECOINS.includes(h.symbol) &&
+        h.symbol !== selectedAsset?.symbol
+    )
+    .map((h) => h.symbol);
+
+  const showCounterpart =
+    availableStablecoins.length > 0 &&
+    selectedAsset !== null &&
+    !STABLECOINS.includes(selectedAsset.symbol) &&
+    parseFloat(total) > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,26 +103,53 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
       return;
     }
 
+    const qty = parseFloat(quantity);
+    const prc = parseFloat(price);
+    if (isNaN(qty) || isNaN(prc) || qty <= 0 || prc <= 0) {
+      setError(t("invalidAmounts"));
+      return;
+    }
+
     setLoading(true);
 
     const result = await addTransaction({
       type,
       asset_symbol: selectedAsset.symbol,
       asset_name: selectedAsset.name,
-      quantity: parseFloat(quantity),
-      price_per_unit: parseFloat(price),
+      quantity: qty,
+      price_per_unit: prc,
       currency,
       notes: notes || undefined,
       transacted_at: new Date(date).toISOString(),
     });
 
-    setLoading(false);
-
     if (result.error) {
+      setLoading(false);
       setError(result.error);
       return;
     }
 
+    // Stablecoin counterpart transaction
+    if (counterpart && parseFloat(total) > 0) {
+      const counterpartResult = await addTransaction({
+        type: type === "buy" ? "sell" : "buy",
+        asset_symbol: counterpart,
+        asset_name: counterpart,
+        quantity: parseFloat(total),
+        price_per_unit: 1,
+        currency: "USD",
+        notes: `Auto: contrapartida ${type === "buy" ? "compra" : "venta"} ${selectedAsset.symbol}`,
+        transacted_at: new Date(date).toISOString(),
+      });
+
+      if (counterpartResult.error) {
+        setLoading(false);
+        setError(`Transacción guardada, pero error en contrapartida: ${counterpartResult.error}`);
+        return;
+      }
+    }
+
+    setLoading(false);
     resetForm();
     onClose();
   };
@@ -79,7 +163,7 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl mx-4">
+      <div className="relative z-10 mx-4 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">
             {t("addTitle")}
@@ -140,6 +224,25 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
             label={t("asset")}
           />
 
+          {/* Total gastado (bidirectional) */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-foreground">
+              {t("totalSpent")}
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={total}
+                onChange={(e) => handleTotalChange(e.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <span className="shrink-0 text-sm font-medium text-muted-foreground">{currency}</span>
+            </div>
+          </div>
+
           {/* Quantity + Price row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -152,9 +255,9 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                 min="0"
                 required
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => handleQuantityChange(e.target.value)}
                 placeholder="0.5"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
             <div className="space-y-1.5">
@@ -167,9 +270,9 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
                 min="0"
                 required
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => handlePriceChange(e.target.value)}
                 placeholder="65000"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>
@@ -203,6 +306,27 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
             </div>
           </div>
 
+          {/* Stablecoin counterpart selector */}
+          {showCounterpart && (
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-foreground">
+                {type === "buy" ? t("deductFrom") : t("creditTo")}
+              </label>
+              <select
+                value={counterpart}
+                onChange={(e) => setCounterpart(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              >
+                <option value="">{t("noCounterpart")}</option>
+                {availableStablecoins.map((sym) => (
+                  <option key={sym} value={sym}>
+                    {sym}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Notes */}
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-foreground">
@@ -215,20 +339,6 @@ export function AddTransactionModal({ open, onClose }: AddTransactionModalProps)
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
-
-          {/* Total preview */}
-          {quantity && price && (
-            <div className="rounded-lg bg-muted px-4 py-3 text-sm">
-              <span className="text-muted-foreground">{t("total")}: </span>
-              <span className="font-medium text-foreground">
-                {currency === "USD" ? "$" : "ARS "}
-                {(parseFloat(quantity) * parseFloat(price)).toLocaleString(
-                  undefined,
-                  { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                )}
-              </span>
-            </div>
-          )}
 
           <button
             type="submit"

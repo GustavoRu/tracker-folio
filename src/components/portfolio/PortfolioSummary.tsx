@@ -19,33 +19,36 @@ function computeTotals(
 ) {
   let totalValueUSD = 0;
   let totalCostUSD = 0;
+  let totalRealizedPnlUSD = 0;
+  let totalOrigCostUSD = 0;
 
   for (const h of holdings) {
-    const price = priceMap.get(h.symbol);
-    if (!price) continue;
+    const convFactor =
+      h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
 
-    let valueUSD: number;
-    if (price.currency === "ARS" && dolarBlueVenta > 0) {
-      valueUSD = (h.quantity * price.currentPrice) / dolarBlueVenta;
-    } else {
-      valueUSD = h.quantity * price.currentPrice;
-    }
-    totalValueUSD += valueUSD;
+    totalOrigCostUSD += h.originalTotalCost * convFactor;
+    totalRealizedPnlUSD += h.realizedPnl * convFactor;
 
-    let costUSD: number;
-    if (h.costCurrency === "ARS" && dolarBlueVenta > 0) {
-      costUSD = h.totalCost / dolarBlueVenta;
-    } else {
-      costUSD = h.totalCost;
+    if (h.quantity > 0) {
+      const price = priceMap.get(h.symbol);
+      if (!price) continue;
+
+      let valueUSD: number;
+      if (price.currency === "ARS" && dolarBlueVenta > 0) {
+        valueUSD = (h.quantity * price.currentPrice) / dolarBlueVenta;
+      } else {
+        valueUSD = h.quantity * price.currentPrice;
+      }
+      totalValueUSD += valueUSD;
+      totalCostUSD += h.totalCost * convFactor;
     }
-    totalCostUSD += costUSD;
   }
 
   const totalValueARS = totalValueUSD * dolarBlueVenta;
-  const pnl = totalCostUSD > 0 ? ((totalValueUSD - totalCostUSD) / totalCostUSD) * 100 : 0;
-  const pnlAbsolute = totalValueUSD - totalCostUSD;
+  const pnlAbsolute = (totalValueUSD - totalCostUSD) + totalRealizedPnlUSD;
+  const pnl = totalOrigCostUSD > 0 ? (pnlAbsolute / totalOrigCostUSD) * 100 : 0;
 
-  return { totalValueUSD, totalValueARS, totalCostUSD, pnl, pnlAbsolute };
+  return { totalValueUSD, totalValueARS, pnl, pnlAbsolute };
 }
 
 export function PortfolioSummary({
@@ -113,7 +116,7 @@ export function PortfolioSummary({
       </div>
 
       {/* P&L */}
-      <div className={`rounded-xl border border-border bg-card p-5 border-l-4 ${isGain ? "border-l-gain bg-gain/5" : "border-l-loss bg-loss/5"}`}>
+      <div className={`rounded-xl border border-border p-5 border-l-4 ${isGain ? "border-l-gain bg-gain/5" : "border-l-loss bg-loss/5"}`}>
         <div className="flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-4 w-4 ${pnlColor} ${!isGain ? "rotate-180" : ""}`}>
             <path fillRule="evenodd" d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.061l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042-.815a.75.75 0 01-.53-.918z" clipRule="evenodd" />

@@ -68,41 +68,58 @@ export function HoldingsTable({
         </thead>
         <tbody className="divide-y divide-border">
           {holdings.map((h) => {
+            const isClosed = h.quantity === 0;
             const price = priceMap.get(h.symbol);
             const currentPrice = price?.currentPrice ?? 0;
             const priceCurrency = price?.currency ?? "USD";
 
-            let valueUSD: number;
-            if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
-              valueUSD = (h.quantity * currentPrice) / dolarBlueVenta;
+            let valueUSD = 0;
+            let valueARS = 0;
+            let pnlPct = 0;
+            let pnlAbsolute = 0;
+
+            if (!isClosed) {
+              if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
+                valueUSD = (h.quantity * currentPrice) / dolarBlueVenta;
+              } else {
+                valueUSD = h.quantity * currentPrice;
+              }
+              valueARS = valueUSD * dolarBlueVenta;
+
+              const convFactor =
+                h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
+              const costUSD = h.totalCost * convFactor;
+              pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
+              pnlAbsolute = valueUSD - costUSD;
             } else {
-              valueUSD = h.quantity * currentPrice;
+              // Closed position: show realized P&L
+              const convFactor =
+                h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
+              const origCostUSD = h.originalTotalCost * convFactor;
+              pnlAbsolute = h.realizedPnl * convFactor;
+              pnlPct = origCostUSD > 0 ? (pnlAbsolute / origCostUSD) * 100 : 0;
             }
 
-            const valueARS = valueUSD * dolarBlueVenta;
-
-            let costUSD: number;
-            if (h.costCurrency === "ARS" && dolarBlueVenta > 0) {
-              costUSD = h.totalCost / dolarBlueVenta;
-            } else {
-              costUSD = h.totalCost;
-            }
-
-            const pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
-            const isGain = pnlPct >= 0;
+            const isGain = isClosed ? pnlAbsolute >= 0 : pnlPct >= 0;
             const pnlColor = isGain ? "text-gain" : "text-loss";
-            const pnlAbsolute = valueUSD - costUSD;
             const badgeStyle = CATEGORY_BADGE_STYLES[h.category] ?? "bg-muted text-muted-foreground";
 
             return (
               <tr
                 key={h.symbol}
                 onClick={() => onSelectAsset?.(h.symbol)}
-                className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""}`}
+                className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""} ${isClosed ? "opacity-55" : ""}`}
               >
                 <td className="px-6 py-4">
                   <div>
-                    <p className="font-medium text-foreground">{h.symbol}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground">{h.symbol}</p>
+                      {isClosed && (
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                          {t("closedPosition")}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">{h.name}</p>
                   </div>
                 </td>
@@ -112,7 +129,7 @@ export function HoldingsTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
-                  {h.quantity.toLocaleString(undefined, {
+                  {isClosed ? "—" : h.quantity.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 8,
                   })}
@@ -121,15 +138,13 @@ export function HoldingsTable({
                   {formatCurrency(h.avgCostPerUnit, h.costCurrency)}
                 </td>
                 <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-foreground">
-                  {currentPrice > 0
-                    ? formatCurrency(currentPrice, priceCurrency)
-                    : "-"}
+                  {isClosed ? "—" : currentPrice > 0 ? formatCurrency(currentPrice, priceCurrency) : "—"}
                 </td>
                 <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
-                  {formatCurrency(valueUSD, "USD")}
+                  {isClosed ? "—" : formatCurrency(valueUSD, "USD")}
                 </td>
                 <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
-                  {dolarBlueVenta > 0 ? formatCurrency(valueARS, "ARS") : "-"}
+                  {isClosed ? "—" : dolarBlueVenta > 0 ? formatCurrency(valueARS, "ARS") : "—"}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <span className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-medium tabular-nums ${isGain ? "bg-gain/10 text-gain" : "bg-loss/10 text-loss"}`}>

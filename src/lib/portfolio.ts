@@ -8,6 +8,8 @@ export interface Holding {
   avgCostPerUnit: number;
   totalCost: number;
   costCurrency: "USD" | "ARS";
+  realizedPnl: number;
+  originalTotalCost: number;
 }
 
 interface TransactionRow {
@@ -31,6 +33,7 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
       buyQty: number;
       buyTotal: number;
       sellQty: number;
+      sellTotal: number;
       currency: "USD" | "ARS";
     }
   >();
@@ -43,6 +46,7 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
       buyQty: 0,
       buyTotal: 0,
       sellQty: 0,
+      sellTotal: 0,
       currency: tx.currency as "USD" | "ARS",
     };
 
@@ -51,6 +55,7 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
       entry.buyTotal += tx.quantity * tx.price_per_unit;
     } else {
       entry.sellQty += tx.quantity;
+      entry.sellTotal += tx.quantity * tx.price_per_unit;
     }
 
     map.set(sym, entry);
@@ -59,21 +64,30 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
   const holdings: Holding[] = [];
 
   for (const [symbol, entry] of map) {
-    const quantity = entry.buyQty - entry.sellQty;
-    if (quantity <= 0) continue;
-
-    const avgCost = entry.buyQty > 0 ? entry.buyTotal / entry.buyQty : 0;
+    const quantity = Math.max(0, entry.buyQty - entry.sellQty);
+    const avgBuyCost = entry.buyQty > 0 ? entry.buyTotal / entry.buyQty : 0;
+    const realizedPnl = entry.sellTotal - avgBuyCost * entry.sellQty;
+    const originalTotalCost = entry.buyTotal;
 
     holdings.push({
       symbol,
       name: entry.name,
       category: entry.category,
       quantity,
-      avgCostPerUnit: avgCost,
-      totalCost: avgCost * quantity,
+      avgCostPerUnit: avgBuyCost,
+      totalCost: avgBuyCost * quantity,
       costCurrency: entry.currency,
+      realizedPnl,
+      originalTotalCost,
     });
   }
 
-  return holdings.sort((a, b) => b.totalCost - a.totalCost);
+  return holdings.sort((a, b) => {
+    // Open positions first, sorted by remaining cost desc
+    if (a.quantity > 0 && b.quantity === 0) return -1;
+    if (a.quantity === 0 && b.quantity > 0) return 1;
+    if (a.quantity > 0 && b.quantity > 0) return b.totalCost - a.totalCost;
+    // Both closed: sort by |realizedPnl| desc
+    return Math.abs(b.realizedPnl) - Math.abs(a.realizedPnl);
+  });
 }
