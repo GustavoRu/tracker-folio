@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import type { Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -55,50 +55,23 @@ export function HoldingsTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <th className="px-6 py-3">{t("asset")}</th>
-            <th className="px-6 py-3">{t("category")}</th>
-            <th className="px-6 py-3 text-right">{t("quantity")}</th>
-            <th className="px-6 py-3 text-right">{t("avgCost")}</th>
-            <th className="px-6 py-3 text-right">{t("currentPrice")}</th>
-            <th className="px-6 py-3 text-right">{t("valueUSD")}</th>
-            <th className="px-6 py-3 text-right">{t("valueARS")}</th>
-            <th className="px-6 py-3 text-right">{t("pnl")}</th>
-            <th className="px-6 py-3 text-right">{t("pnlUSD")}</th>
+            <th className="px-4 py-3 sm:px-6">{t("asset")}</th>
+            <th className="px-4 py-3">{t("category")}</th>
+            <th className="px-4 py-3 text-right">{t("quantity")}</th>
+            <th className="px-4 py-3 text-right">{t("avgCost")}</th>
+            <th className="px-4 py-3 text-right">{t("currentPrice")}</th>
+            <th className="px-4 py-3 text-right">{t("value")}</th>
+            <th className="px-4 py-3 text-right sm:px-6">{t("pnl")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {holdings.map((h) => {
-            const isClosed = h.quantity === 0;
             const price = priceMap.get(h.symbol);
             const currentPrice = price?.currentPrice ?? 0;
             const priceCurrency = price?.currency ?? "USD";
 
-            let valueUSD = 0;
-            let valueARS = 0;
-            let pnlPct = 0;
-            let pnlAbsolute = 0;
-
-            if (!isClosed) {
-              if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
-                valueUSD = (h.quantity * currentPrice) / dolarBlueVenta;
-              } else {
-                valueUSD = h.quantity * currentPrice;
-              }
-              valueARS = valueUSD * dolarBlueVenta;
-
-              const convFactor =
-                h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
-              const costUSD = h.totalCost * convFactor;
-              pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
-              pnlAbsolute = valueUSD - costUSD;
-            } else {
-              // Closed position: show realized P&L
-              const convFactor =
-                h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
-              const origCostUSD = h.originalTotalCost * convFactor;
-              pnlAbsolute = h.realizedPnl * convFactor;
-              pnlPct = origCostUSD > 0 ? (pnlAbsolute / origCostUSD) * 100 : 0;
-            }
+            const { isClosed, valueUSD, valueARS, pnlPct, pnlAbsolute } =
+              computeHoldingPnl(h, price, dolarBlueVenta);
 
             const isGain = isClosed ? pnlAbsolute >= 0 : pnlPct >= 0;
             const pnlColor = isGain ? "text-gain" : "text-loss";
@@ -110,7 +83,7 @@ export function HoldingsTable({
                 onClick={() => onSelectAsset?.(h.symbol)}
                 className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""} ${isClosed ? "opacity-55" : ""}`}
               >
-                <td className="px-6 py-4">
+                <td className="px-4 py-4 sm:px-6">
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-foreground">{h.symbol}</p>
@@ -123,37 +96,49 @@ export function HoldingsTable({
                     <p className="text-xs text-muted-foreground">{h.name}</p>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-4 py-4">
                   <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${badgeStyle}`}>
                     {CATEGORY_LABELS[h.category] ?? h.category}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
+                <td className="px-4 py-4 text-right font-mono font-medium tabular-nums text-foreground">
                   {isClosed ? "—" : h.quantity.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 8,
                   })}
                 </td>
-                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
+                <td className="px-4 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
                   {formatCurrency(h.avgCostPerUnit, h.costCurrency)}
                 </td>
-                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-foreground">
+                <td className="px-4 py-4 text-right font-mono text-sm tabular-nums text-foreground">
                   {isClosed ? "—" : currentPrice > 0 ? formatCurrency(currentPrice, priceCurrency) : "—"}
                 </td>
-                <td className="px-6 py-4 text-right font-mono font-medium tabular-nums text-foreground">
-                  {isClosed ? "—" : formatCurrency(valueUSD, "USD")}
+                <td className="px-4 py-4 text-right">
+                  {isClosed ? (
+                    <span className="font-mono text-foreground">—</span>
+                  ) : (
+                    <div>
+                      <p className="font-mono font-medium tabular-nums text-foreground">
+                        {formatCurrency(valueUSD, "USD")}
+                      </p>
+                      {dolarBlueVenta > 0 && (
+                        <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                          {formatCurrency(valueARS, "ARS")}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </td>
-                <td className="px-6 py-4 text-right font-mono text-sm tabular-nums text-muted-foreground">
-                  {isClosed ? "—" : dolarBlueVenta > 0 ? formatCurrency(valueARS, "ARS") : "—"}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-medium tabular-nums ${isGain ? "bg-gain/10 text-gain" : "bg-loss/10 text-loss"}`}>
-                    {formatPercent(pnlPct)}
-                  </span>
-                </td>
-                <td className={`px-6 py-4 text-right font-mono font-medium tabular-nums ${pnlColor}`}>
-                  {pnlAbsolute >= 0 ? "+" : "-"}
-                  {formatCurrency(Math.abs(pnlAbsolute), "USD")}
+                <td className="px-4 py-4 text-right sm:px-6">
+                  <div>
+                    <p className={`font-mono font-medium tabular-nums ${pnlColor}`}>
+                      {pnlAbsolute >= 0 ? "+" : "-"}
+                      {formatCurrency(Math.abs(pnlAbsolute), "USD")}
+                    </p>
+                    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-medium tabular-nums ${isGain ? "bg-gain/10 text-gain" : "bg-loss/10 text-loss"}`}>
+                      {formatPercent(pnlPct)}
+                    </span>
+                  </div>
                 </td>
               </tr>
             );

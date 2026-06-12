@@ -1,13 +1,10 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import type { Holding } from "@/lib/portfolio";
+import type { Holding, PriceInfo } from "@/lib/portfolio";
 import type { Quote, DolarQuote } from "@/types/quote";
 
-export interface PriceInfo {
-  currentPrice: number;
-  currency: "USD" | "ARS";
-}
+export type { PriceInfo };
 
 async function fetchJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);

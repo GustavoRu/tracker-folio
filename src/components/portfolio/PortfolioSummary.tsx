@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import type { Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 interface PortfolioSummaryProps {
@@ -18,35 +18,23 @@ function computeTotals(
   dolarBlueVenta: number
 ) {
   let totalValueUSD = 0;
-  let totalCostUSD = 0;
-  let totalRealizedPnlUSD = 0;
-  let totalOrigCostUSD = 0;
+  let totalCostBasisUSD = 0;
+  let pnlAbsolute = 0;
 
+  // Total P&L = sum of the per-row P&L shown in HoldingsTable:
+  // unrealized for open positions, realized for closed ones.
   for (const h of holdings) {
-    const convFactor =
-      h.costCurrency === "ARS" && dolarBlueVenta > 0 ? 1 / dolarBlueVenta : 1;
+    const price = priceMap.get(h.symbol);
+    if (h.quantity > 0 && !price) continue;
 
-    totalOrigCostUSD += h.originalTotalCost * convFactor;
-    totalRealizedPnlUSD += h.realizedPnl * convFactor;
-
-    if (h.quantity > 0) {
-      const price = priceMap.get(h.symbol);
-      if (!price) continue;
-
-      let valueUSD: number;
-      if (price.currency === "ARS" && dolarBlueVenta > 0) {
-        valueUSD = (h.quantity * price.currentPrice) / dolarBlueVenta;
-      } else {
-        valueUSD = h.quantity * price.currentPrice;
-      }
-      totalValueUSD += valueUSD;
-      totalCostUSD += h.totalCost * convFactor;
-    }
+    const pnl = computeHoldingPnl(h, price, dolarBlueVenta);
+    totalValueUSD += pnl.valueUSD;
+    totalCostBasisUSD += pnl.costBasisUSD;
+    pnlAbsolute += pnl.pnlAbsolute;
   }
 
   const totalValueARS = totalValueUSD * dolarBlueVenta;
-  const pnlAbsolute = (totalValueUSD - totalCostUSD) + totalRealizedPnlUSD;
-  const pnl = totalOrigCostUSD > 0 ? (pnlAbsolute / totalOrigCostUSD) * 100 : 0;
+  const pnl = totalCostBasisUSD > 0 ? (pnlAbsolute / totalCostBasisUSD) * 100 : 0;
 
   return { totalValueUSD, totalValueARS, pnl, pnlAbsolute };
 }
@@ -127,7 +115,7 @@ export function PortfolioSummary({
           {formatPercent(pnl)}
         </p>
         <p className={`mt-1 font-mono text-sm tabular-nums ${pnlColor}`}>
-          {pnlAbsolute >= 0 ? "+" : ""}
+          {pnlAbsolute >= 0 ? "+" : "-"}
           {formatCurrency(Math.abs(pnlAbsolute), "USD")}
         </p>
       </div>

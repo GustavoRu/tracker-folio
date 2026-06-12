@@ -1,5 +1,10 @@
 import type { AssetCategory } from "@/types/quote";
 
+export interface PriceInfo {
+  currentPrice: number;
+  currency: "USD" | "ARS";
+}
+
 export interface Holding {
   symbol: string;
   name: string;
@@ -90,4 +95,61 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
     // Both closed: sort by |realizedPnl| desc
     return Math.abs(b.realizedPnl) - Math.abs(a.realizedPnl);
   });
+}
+
+export interface HoldingPnl {
+  isClosed: boolean;
+  valueUSD: number;
+  valueARS: number;
+  costBasisUSD: number;
+  pnlAbsolute: number;
+  pnlPct: number;
+}
+
+export function computeHoldingPnl(
+  holding: Holding,
+  price: PriceInfo | undefined,
+  dolarBlueVenta: number
+): HoldingPnl {
+  const isClosed = holding.quantity === 0;
+  const convFactor =
+    holding.costCurrency === "ARS" && dolarBlueVenta > 0
+      ? 1 / dolarBlueVenta
+      : 1;
+
+  if (isClosed) {
+    // Closed position: realized P&L over the original cost basis
+    const costBasisUSD = holding.originalTotalCost * convFactor;
+    const pnlAbsolute = holding.realizedPnl * convFactor;
+    return {
+      isClosed,
+      valueUSD: 0,
+      valueARS: 0,
+      costBasisUSD,
+      pnlAbsolute,
+      pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+    };
+  }
+
+  const currentPrice = price?.currentPrice ?? 0;
+  const priceCurrency = price?.currency ?? "USD";
+
+  let valueUSD: number;
+  if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
+    valueUSD = (holding.quantity * currentPrice) / dolarBlueVenta;
+  } else {
+    valueUSD = holding.quantity * currentPrice;
+  }
+
+  const costBasisUSD = holding.totalCost * convFactor;
+  const pnlAbsolute = valueUSD - costBasisUSD;
+
+  return {
+    isClosed,
+    valueUSD,
+    valueARS: valueUSD * dolarBlueVenta,
+    costBasisUSD,
+    pnlAbsolute,
+    pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+  };
 }

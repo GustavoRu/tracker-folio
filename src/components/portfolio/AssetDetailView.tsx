@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { TransactionList } from "./TransactionList";
-import type { Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 interface TransactionRow {
@@ -40,22 +40,12 @@ export function AssetDetailView({
   const currentPrice = priceInfo?.currentPrice ?? 0;
   const priceCurrency = priceInfo?.currency ?? "USD";
 
-  let valueUSD: number;
-  if (priceCurrency === "ARS" && dolarBlueVenta > 0) {
-    valueUSD = (holding.quantity * currentPrice) / dolarBlueVenta;
-  } else {
-    valueUSD = holding.quantity * currentPrice;
-  }
-
-  let costUSD: number;
-  if (holding.costCurrency === "ARS" && dolarBlueVenta > 0) {
-    costUSD = holding.totalCost / dolarBlueVenta;
-  } else {
-    costUSD = holding.totalCost;
-  }
-
-  const pnlUSD = valueUSD - costUSD;
-  const pnlPct = costUSD > 0 ? ((valueUSD - costUSD) / costUSD) * 100 : 0;
+  const {
+    valueUSD,
+    costBasisUSD: costUSD,
+    pnlAbsolute: pnlUSD,
+    pnlPct,
+  } = computeHoldingPnl(holding, priceInfo, dolarBlueVenta);
   const isGain = pnlPct >= 0;
   const pnlColor = isGain ? "text-gain" : "text-loss";
 

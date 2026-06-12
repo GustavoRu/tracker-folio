@@ -87,7 +87,7 @@ export default function LocaleLayout({
           <NextIntlClientProvider locale={locale} messages={messages}>
             <QueryProvider>
               <Header />
-              <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+              <main className="mx-auto max-w-(--breakpoint-2xl) px-4 py-6">{children}</main>
             </QueryProvider>
           </NextIntlClientProvider>
         </ThemeProvider>

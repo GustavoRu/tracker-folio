@@ -9,7 +9,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 shadow-sm backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4">
+      <div className="mx-auto flex h-14 max-w-(--breakpoint-2xl) items-center justify-between gap-2 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-blue-500 to-indigo-600 font-bold text-sm text-white">
             TF
