@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import type { Holding, PriceInfo } from "@/lib/portfolio";
+import { holdingKey, type Holding, type PriceInfo } from "@/lib/portfolio";
 import type { Quote, DolarQuote } from "@/types/quote";
 
 export type { PriceInfo };
@@ -53,6 +53,7 @@ export function usePortfolioPrices(holdings: Holding[]) {
 
   const isLoading = queries.some((q) => q.isLoading);
 
+  // Keyed by holdingKey (category:symbol) — stock and cedear quotes can share a symbol
   const priceMap = new Map<string, PriceInfo>();
 
   const allQuotes: Quote[] = [
@@ -62,14 +63,17 @@ export function usePortfolioPrices(holdings: Holding[]) {
   ];
 
   for (const q of allQuotes) {
-    priceMap.set(q.symbol, {
+    priceMap.set(holdingKey(q), {
       currentPrice: q.price,
       currency: q.currency,
     });
   }
 
   // USD cash = 1 USD
-  priceMap.set("USD", { currentPrice: 1, currency: "USD" });
+  priceMap.set(holdingKey({ category: "dolar", symbol: "USD" }), {
+    currentPrice: 1,
+    currency: "USD",
+  });
 
   // Dolar types: use venta price in ARS
   // The API returns type as label (e.g. "Dolar Blue"), so match by label
@@ -83,7 +87,10 @@ export function usePortfolioPrices(holdings: Holding[]) {
   for (const d of dolarRates) {
     const sym = labelToSymbol[d.type];
     if (sym) {
-      priceMap.set(sym, { currentPrice: d.venta, currency: "ARS" });
+      priceMap.set(holdingKey({ category: "dolar", symbol: sym }), {
+        currentPrice: d.venta,
+        currency: "ARS",
+      });
     }
   }
 

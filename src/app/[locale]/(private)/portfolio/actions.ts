@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 interface AddTransactionInput {
   type: "buy" | "sell";
   asset_symbol: string;
+  asset_category: "crypto" | "stock" | "cedear" | "dolar";
   asset_name: string;
   quantity: number;
   price_per_unit: number;
@@ -25,15 +26,17 @@ export async function addTransaction(input: AddTransactionInput) {
     return { error: "Not authenticated" };
   }
 
-  // Look up the asset in the catalog
+  // Look up the asset in the catalog. Symbols repeat across categories
+  // (e.g. MELI stock vs MELI cedear), so match both.
   const { data: asset } = await supabase
     .from("assets")
     .select("id")
     .eq("symbol", input.asset_symbol.toUpperCase())
+    .eq("category", input.asset_category)
     .single();
 
   if (!asset) {
-    return { error: `Asset "${input.asset_symbol}" not found in catalog` };
+    return { error: `Asset "${input.asset_symbol}" (${input.asset_category}) not found in catalog` };
   }
 
   const { error } = await supabase.from("transactions").insert({

@@ -9,7 +9,8 @@ import { PortfolioSummary } from "./PortfolioSummary";
 import { HoldingsTable } from "./HoldingsTable";
 import { AllocationChart } from "./AllocationChart";
 import { AssetDetailView } from "./AssetDetailView";
-import type { Holding } from "@/lib/portfolio";
+import { holdingKey, type Holding } from "@/lib/portfolio";
+import type { AssetCategory } from "@/types/quote";
 
 interface TransactionRow {
   id: string;
@@ -22,6 +23,7 @@ interface TransactionRow {
   assets: {
     symbol: string;
     name: string;
+    category: AssetCategory;
   };
 }
 
@@ -44,12 +46,13 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
     setSelectedAsset(null);
   };
 
+  // selectedAsset holds a holdingKey (category:symbol) — symbols repeat across categories
   const selectedHolding = selectedAsset
-    ? holdings.find((h) => h.symbol === selectedAsset)
+    ? holdings.find((h) => holdingKey(h) === selectedAsset)
     : null;
 
-  const filteredTransactions = selectedAsset
-    ? transactions.filter((tx) => tx.assets.symbol === selectedAsset)
+  const filteredTransactions = selectedHolding
+    ? transactions.filter((tx) => holdingKey(tx.assets) === selectedAsset)
     : transactions;
 
   return (

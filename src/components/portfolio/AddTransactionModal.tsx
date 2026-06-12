@@ -115,6 +115,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
     const result = await addTransaction({
       type,
       asset_symbol: selectedAsset.symbol,
+      asset_category: selectedAsset.category,
       asset_name: selectedAsset.name,
       quantity: qty,
       price_per_unit: prc,
@@ -134,6 +135,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
       const counterpartResult = await addTransaction({
         type: type === "buy" ? "sell" : "buy",
         asset_symbol: counterpart,
+        asset_category: counterpart === "USD" ? "dolar" : "crypto",
         asset_name: counterpart,
         quantity: parseFloat(total),
         price_per_unit: 1,

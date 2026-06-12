@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, holdingKey, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 interface PortfolioSummaryProps {
@@ -24,7 +24,7 @@ function computeTotals(
   // Total P&L = sum of the per-row P&L shown in HoldingsTable:
   // unrealized for open positions, realized for closed ones.
   for (const h of holdings) {
-    const price = priceMap.get(h.symbol);
+    const price = priceMap.get(holdingKey(h));
     if (h.quantity > 0 && !price) continue;
 
     const pnl = computeHoldingPnl(h, price, dolarBlueVenta);

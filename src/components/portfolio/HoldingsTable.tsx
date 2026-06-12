@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, holdingKey, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -66,7 +66,7 @@ export function HoldingsTable({
         </thead>
         <tbody className="divide-y divide-border">
           {holdings.map((h) => {
-            const price = priceMap.get(h.symbol);
+            const price = priceMap.get(holdingKey(h));
             const currentPrice = price?.currentPrice ?? 0;
             const priceCurrency = price?.currency ?? "USD";
 
@@ -79,8 +79,8 @@ export function HoldingsTable({
 
             return (
               <tr
-                key={h.symbol}
-                onClick={() => onSelectAsset?.(h.symbol)}
+                key={holdingKey(h)}
+                onClick={() => onSelectAsset?.(holdingKey(h))}
                 className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""} ${isClosed ? "opacity-55" : ""}`}
               >
                 <td className="px-4 py-4 sm:px-6">

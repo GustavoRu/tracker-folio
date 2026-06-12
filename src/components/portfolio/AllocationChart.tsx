@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { formatCurrency } from "@/lib/utils";
-import type { Holding } from "@/lib/portfolio";
+import { holdingKey, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 const COLORS = [
@@ -20,6 +20,7 @@ const COLORS = [
 ];
 
 interface Slice {
+  key: string;
   symbol: string;
   name: string;
   valueUSD: number;
@@ -39,10 +40,10 @@ function buildSlices(
   priceMap: Map<string, PriceInfo>,
   dolarBlueVenta: number
 ): Slice[] {
-  const items: { symbol: string; name: string; valueUSD: number }[] = [];
+  const items: { key: string; symbol: string; name: string; valueUSD: number }[] = [];
 
   for (const h of holdings) {
-    const price = priceMap.get(h.symbol);
+    const price = priceMap.get(holdingKey(h));
     if (!price) continue;
 
     let valueUSD: number;
@@ -53,7 +54,7 @@ function buildSlices(
     }
 
     if (valueUSD > 0) {
-      items.push({ symbol: h.symbol, name: h.name, valueUSD });
+      items.push({ key: holdingKey(h), symbol: h.symbol, name: h.name, valueUSD });
     }
   }
 
@@ -63,6 +64,7 @@ function buildSlices(
   if (total === 0) return [];
 
   return items.map((item, i) => ({
+    key: item.key,
     symbol: item.symbol,
     name: item.name,
     valueUSD: item.valueUSD,
@@ -152,7 +154,7 @@ export function AllocationChart({
   }, []);
 
   const hoveredSlice = hoveredSymbol
-    ? slices.find((s) => s.symbol === hoveredSymbol)
+    ? slices.find((s) => s.key === hoveredSymbol)
     : null;
 
   return (
@@ -167,12 +169,12 @@ export function AllocationChart({
             {arcs.map((arc) =>
               arc.endAngle - arc.startAngle >= 0.5 ? (
                 <PieSlice
-                  key={arc.symbol}
+                  key={arc.key}
                   startAngle={arc.startAngle}
                   endAngle={arc.endAngle}
                   color={arc.color}
-                  isHovered={hoveredSymbol === arc.symbol}
-                  onMouseEnter={() => setHoveredSymbol(arc.symbol)}
+                  isHovered={hoveredSymbol === arc.key}
+                  onMouseEnter={() => setHoveredSymbol(arc.key)}
                   onMouseLeave={() => setHoveredSymbol(null)}
                 />
               ) : null
@@ -203,11 +205,11 @@ export function AllocationChart({
         <div className="grid w-full grid-cols-2 gap-3 lg:grid-cols-3">
           {slices.map((slice) => (
             <div
-              key={slice.symbol}
+              key={slice.key}
               className={`flex items-start gap-2 rounded-md px-1.5 py-0.5 transition-colors ${
-                hoveredSymbol === slice.symbol ? "bg-muted" : ""
+                hoveredSymbol === slice.key ? "bg-muted" : ""
               }`}
-              onMouseEnter={() => setHoveredSymbol(slice.symbol)}
+              onMouseEnter={() => setHoveredSymbol(slice.key)}
               onMouseLeave={() => setHoveredSymbol(null)}
             >
               <div
@@ -238,7 +240,7 @@ export function AllocationChart({
         <div className="mb-4 flex h-3 overflow-hidden rounded-full">
           {slices.map((slice) => (
             <div
-              key={slice.symbol}
+              key={slice.key}
               style={{ width: `${slice.percent}%`, backgroundColor: slice.color }}
             />
           ))}
@@ -246,7 +248,7 @@ export function AllocationChart({
         {/* Compact legend list */}
         <div className="space-y-2">
           {slices.map((slice) => (
-            <div key={slice.symbol} className="flex items-center justify-between">
+            <div key={slice.key} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div
                   className="h-2.5 w-2.5 shrink-0 rounded-sm"

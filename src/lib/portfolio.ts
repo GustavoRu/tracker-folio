@@ -5,6 +5,12 @@ export interface PriceInfo {
   currency: "USD" | "ARS";
 }
 
+// Symbols can repeat across categories (e.g. MELI stock vs MELI cedear),
+// so holdings and price lookups are keyed by category + symbol.
+export function holdingKey(h: { symbol: string; category: AssetCategory }): string {
+  return `${h.category}:${h.symbol}`;
+}
+
 export interface Holding {
   symbol: string;
   name: string;
@@ -33,6 +39,7 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
   const map = new Map<
     string,
     {
+      symbol: string;
       name: string;
       category: AssetCategory;
       buyQty: number;
@@ -44,8 +51,9 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
   >();
 
   for (const tx of transactions) {
-    const sym = tx.assets.symbol;
-    const entry = map.get(sym) ?? {
+    const key = holdingKey(tx.assets);
+    const entry = map.get(key) ?? {
+      symbol: tx.assets.symbol,
       name: tx.assets.name,
       category: tx.assets.category,
       buyQty: 0,
@@ -63,19 +71,19 @@ export function computeHoldings(transactions: TransactionRow[]): Holding[] {
       entry.sellTotal += tx.quantity * tx.price_per_unit;
     }
 
-    map.set(sym, entry);
+    map.set(key, entry);
   }
 
   const holdings: Holding[] = [];
 
-  for (const [symbol, entry] of map) {
+  for (const entry of map.values()) {
     const quantity = Math.max(0, entry.buyQty - entry.sellQty);
     const avgBuyCost = entry.buyQty > 0 ? entry.buyTotal / entry.buyQty : 0;
     const realizedPnl = entry.sellTotal - avgBuyCost * entry.sellQty;
     const originalTotalCost = entry.buyTotal;
 
     holdings.push({
-      symbol,
+      symbol: entry.symbol,
       name: entry.name,
       category: entry.category,
       quantity,
