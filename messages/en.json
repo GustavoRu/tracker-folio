@@ -114,6 +114,7 @@
     "category": "Category",
     "quantity": "Quantity",
     "avgCost": "Avg. Cost",
+    "price": "Price",
     "currentPrice": "Current Price",
     "valueUSD": "Value USD",
     "valueARS": "Value ARS",

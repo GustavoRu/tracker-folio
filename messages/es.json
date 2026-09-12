@@ -114,6 +114,7 @@
     "category": "Categoria",
     "quantity": "Cantidad",
     "avgCost": "Costo Prom.",
+    "price": "Precio",
     "currentPrice": "Precio Actual",
     "valueUSD": "Valor USD",
     "valueARS": "Valor ARS",

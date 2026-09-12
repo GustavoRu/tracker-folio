@@ -10,11 +10,14 @@ export function formatCurrency(
   currency: "USD" | "ARS" = "USD",
   locale = "en-US"
 ): string {
+  // Sub-unit prices need extra decimals, but zero should never render as $0.0000
+  const small = value !== 0 && Math.abs(value) < 1;
+
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    minimumFractionDigits: value < 1 ? 4 : 2,
-    maximumFractionDigits: value < 1 ? 6 : 2,
+    minimumFractionDigits: small ? 4 : 2,
+    maximumFractionDigits: small ? 6 : 2,
   }).format(value);
 }
 
