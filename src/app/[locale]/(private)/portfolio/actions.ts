@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 interface AddTransactionInput {
   type: "buy" | "sell";
@@ -15,7 +16,40 @@ interface AddTransactionInput {
   transacted_at: string;
 }
 
-export async function addTransaction(input: AddTransactionInput) {
+// Symbols repeat across categories (e.g. MELI stock vs MELI cedear), so match both.
+// A failed lookup and a missing row are different problems and must not share a message.
+async function resolveAssetId(
+  supabase: SupabaseClient,
+  symbol: string,
+  category: string
+): Promise<{ id?: string; error?: string }> {
+  const { data, error } = await supabase
+    .from("assets")
+    .select("id")
+    .eq("symbol", symbol.toUpperCase())
+    .eq("category", category)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      error: `Could not look up "${symbol}" (${category}): ${error.message}`,
+    };
+  }
+
+  if (!data) {
+    return { error: `Asset "${symbol}" (${category}) not found in catalog` };
+  }
+
+  return { id: data.id as string };
+}
+
+// Takes every leg of a trade at once: a buy and its stablecoin counterpart go in
+// as one INSERT, so a failure can never leave the trade half recorded.
+export async function addTransactions(legs: AddTransactionInput[]) {
+  if (legs.length === 0) {
+    return { error: "No transactions to add" };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -26,29 +60,32 @@ export async function addTransaction(input: AddTransactionInput) {
     return { error: "Not authenticated" };
   }
 
-  // Look up the asset in the catalog. Symbols repeat across categories
-  // (e.g. MELI stock vs MELI cedear), so match both.
-  const { data: asset } = await supabase
-    .from("assets")
-    .select("id")
-    .eq("symbol", input.asset_symbol.toUpperCase())
-    .eq("category", input.asset_category)
-    .single();
+  // Resolve every asset before writing anything
+  const rows = [];
+  for (const leg of legs) {
+    const { id, error } = await resolveAssetId(
+      supabase,
+      leg.asset_symbol,
+      leg.asset_category
+    );
 
-  if (!asset) {
-    return { error: `Asset "${input.asset_symbol}" (${input.asset_category}) not found in catalog` };
+    if (error) {
+      return { error };
+    }
+
+    rows.push({
+      user_id: user.id,
+      asset_id: id,
+      type: leg.type,
+      quantity: leg.quantity,
+      price_per_unit: leg.price_per_unit,
+      currency: leg.currency,
+      notes: leg.notes || null,
+      transacted_at: leg.transacted_at,
+    });
   }
 
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
-    asset_id: asset.id,
-    type: input.type,
-    quantity: input.quantity,
-    price_per_unit: input.price_per_unit,
-    currency: input.currency,
-    notes: input.notes || null,
-    transacted_at: input.transacted_at,
-  });
+  const { error } = await supabase.from("transactions").insert(rows);
 
   if (error) {
     return { error: `Failed to add transaction: ${error.message}` };

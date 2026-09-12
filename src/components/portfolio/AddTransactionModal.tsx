@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { addTransaction } from "@/app/[locale]/(private)/portfolio/actions";
+import { addTransactions } from "@/app/[locale]/(private)/portfolio/actions";
 import { AssetCombobox } from "@/components/ui/AssetCombobox";
 import type { AssetOption } from "@/lib/constants";
 import type { Holding } from "@/lib/portfolio";
@@ -112,27 +112,25 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
 
     setLoading(true);
 
-    const result = await addTransaction({
-      type,
-      asset_symbol: selectedAsset.symbol,
-      asset_category: selectedAsset.category,
-      asset_name: selectedAsset.name,
-      quantity: qty,
-      price_per_unit: prc,
-      currency,
-      notes: notes || undefined,
-      transacted_at: new Date(date).toISOString(),
-    });
+    const transactedAt = new Date(date).toISOString();
 
-    if (result.error) {
-      setLoading(false);
-      setError(result.error);
-      return;
-    }
+    const legs = [
+      {
+        type,
+        asset_symbol: selectedAsset.symbol,
+        asset_category: selectedAsset.category,
+        asset_name: selectedAsset.name,
+        quantity: qty,
+        price_per_unit: prc,
+        currency,
+        notes: notes || undefined,
+        transacted_at: transactedAt,
+      },
+    ];
 
-    // Stablecoin counterpart transaction
+    // Stablecoin counterpart travels with the trade so both legs commit together
     if (counterpart && parseFloat(total) > 0) {
-      const counterpartResult = await addTransaction({
+      legs.push({
         type: type === "buy" ? "sell" : "buy",
         asset_symbol: counterpart,
         asset_category: counterpart === "USD" ? "dolar" : "crypto",
@@ -141,14 +139,16 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
         price_per_unit: 1,
         currency: "USD",
         notes: `Auto: contrapartida ${type === "buy" ? "compra" : "venta"} ${selectedAsset.symbol}`,
-        transacted_at: new Date(date).toISOString(),
+        transacted_at: transactedAt,
       });
+    }
 
-      if (counterpartResult.error) {
-        setLoading(false);
-        setError(`Transacción guardada, pero error en contrapartida: ${counterpartResult.error}`);
-        return;
-      }
+    const result = await addTransactions(legs);
+
+    if (result.error) {
+      setLoading(false);
+      setError(result.error);
+      return;
     }
 
     setLoading(false);
