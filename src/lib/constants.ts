@@ -26,6 +26,10 @@ export const CRYPTO_IDS = [
   { id: "near", symbol: "NEAR", name: "NEAR Protocol" },
   { id: "litecoin", symbol: "LTC", name: "Litecoin" },
   { id: "uniswap", symbol: "UNI", name: "Uniswap" },
+  { id: "hedera-hashgraph", symbol: "HBAR", name: "Hedera" },
+  { id: "ondo-finance", symbol: "ONDO", name: "Ondo" },
+  { id: "pump-fun", symbol: "PUMP", name: "Pump.fun" },
+  { id: "avail", symbol: "AVAIL", name: "Avail" },
 ] as const;
 
 export const STOCK_TICKERS = [
