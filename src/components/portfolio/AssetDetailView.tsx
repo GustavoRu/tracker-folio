@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { TransactionList } from "./TransactionList";
 import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
+import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 interface TransactionRow {
@@ -23,6 +24,7 @@ interface TransactionRow {
 interface AssetDetailViewProps {
   holding: Holding;
   priceInfo: PriceInfo | undefined;
+  iconUrl?: string | null;
   dolarBlueVenta: number;
   transactions: TransactionRow[];
   onBack: () => void;
@@ -31,6 +33,7 @@ interface AssetDetailViewProps {
 export function AssetDetailView({
   holding,
   priceInfo,
+  iconUrl,
   dolarBlueVenta,
   transactions,
   onBack,
@@ -61,6 +64,12 @@ export function AssetDetailView({
             <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
           </svg>
         </button>
+        <AssetIcon
+          iconUrl={iconUrl}
+          symbol={holding.symbol}
+          name={holding.name}
+          className="h-10 w-10"
+        />
         <div>
           <h2 className="text-lg font-bold text-foreground">{holding.symbol}</h2>
           <p className="text-sm text-muted-foreground">{holding.name}</p>

@@ -39,7 +39,7 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
   const [activeTab, setActiveTab] = useState<"holdings" | "transactions">("holdings");
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
-  const { priceMap, dolarBlueVenta, isLoading } = usePortfolioPrices(holdings);
+  const { priceMap, iconMap, dolarBlueVenta, isLoading } = usePortfolioPrices(holdings);
 
   const handleTabChange = (tab: "holdings" | "transactions") => {
     setActiveTab(tab);
@@ -148,6 +148,7 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
               <AssetDetailView
                 holding={selectedHolding}
                 priceInfo={priceMap.get(selectedAsset!)}
+                iconUrl={iconMap.get(selectedAsset!)}
                 dolarBlueVenta={dolarBlueVenta}
                 transactions={filteredTransactions}
                 onBack={() => setSelectedAsset(null)}
@@ -156,6 +157,7 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
               <HoldingsTable
                 holdings={holdings}
                 priceMap={priceMap}
+                iconMap={iconMap}
                 dolarBlueVenta={dolarBlueVenta}
                 isLoading={isLoading}
                 onSelectAsset={setSelectedAsset}

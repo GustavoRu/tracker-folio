@@ -5,6 +5,7 @@ import { useQuotes } from "@/hooks/useQuotes";
 import { formatCurrency, formatCompact } from "@/lib/utils";
 import { PriceChange } from "./PriceChange";
 import { QuotesSkeleton } from "./QuotesSkeleton";
+import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { AssetCategory } from "@/types/quote";
 
 interface QuotesTableProps {
@@ -59,18 +60,11 @@ export function QuotesTable({ category }: QuotesTableProps) {
               </td>
               <td className="px-4 py-4 sm:px-6">
                 <div className="flex items-center gap-3">
-                  {quote.iconUrl ? (
-                    <img
-                      src={quote.iconUrl}
-                      alt={quote.name}
-                      className="h-8 w-8 rounded-full"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                      {quote.symbol.slice(0, 2)}
-                    </div>
-                  )}
+                  <AssetIcon
+                    iconUrl={quote.iconUrl}
+                    symbol={quote.symbol}
+                    name={quote.name}
+                  />
                   <div>
                     <p className="font-medium text-foreground">{quote.name}</p>
                     <p className="text-xs text-muted-foreground uppercase">

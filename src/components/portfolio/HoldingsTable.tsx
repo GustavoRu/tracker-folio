@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { computeHoldingPnl, holdingKey, type Holding } from "@/lib/portfolio";
+import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -22,6 +23,7 @@ const CATEGORY_BADGE_STYLES: Record<string, string> = {
 interface HoldingsTableProps {
   holdings: Holding[];
   priceMap: Map<string, PriceInfo>;
+  iconMap: Map<string, string | null>;
   dolarBlueVenta: number;
   isLoading: boolean;
   onSelectAsset?: (symbol: string) => void;
@@ -30,6 +32,7 @@ interface HoldingsTableProps {
 export function HoldingsTable({
   holdings,
   priceMap,
+  iconMap,
   dolarBlueVenta,
   isLoading,
   onSelectAsset,
@@ -84,16 +87,23 @@ export function HoldingsTable({
                 className={`transition-colors hover:bg-card-hover ${onSelectAsset ? "cursor-pointer" : ""} ${isClosed ? "opacity-55" : ""}`}
               >
                 <td className="px-4 py-4 sm:px-6">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-foreground">{h.symbol}</p>
-                      {isClosed && (
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                          {t("closedPosition")}
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3">
+                    <AssetIcon
+                      iconUrl={iconMap.get(holdingKey(h))}
+                      symbol={h.symbol}
+                      name={h.name}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">{h.symbol}</p>
+                        {isClosed && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            {t("closedPosition")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{h.name}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">{h.name}</p>
                   </div>
                 </td>
                 <td className="px-4 py-4">

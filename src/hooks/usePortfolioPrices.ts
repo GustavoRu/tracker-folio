@@ -62,11 +62,15 @@ export function usePortfolioPrices(holdings: Holding[]) {
     ...(cedearQ.data ?? []),
   ];
 
+  // Same keying as priceMap, so holdings can render the icon from the quotes cache
+  const iconMap = new Map<string, string | null>();
+
   for (const q of allQuotes) {
     priceMap.set(holdingKey(q), {
       currentPrice: q.price,
       currency: q.currency,
     });
+    iconMap.set(holdingKey(q), q.iconUrl);
   }
 
   // USD cash = 1 USD
@@ -98,5 +102,5 @@ export function usePortfolioPrices(holdings: Holding[]) {
   const blueRate = dolarRates.find((d) => d.type === "Dolar Blue");
   const dolarBlueVenta = blueRate?.venta ?? 0;
 
-  return { priceMap, dolarBlueVenta, isLoading, dolarRates };
+  return { priceMap, iconMap, dolarBlueVenta, isLoading, dolarRates };
 }
