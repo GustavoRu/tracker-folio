@@ -32,6 +32,8 @@ src/app/
   api/quotes/dolar/route.ts         ← proxies dolarapi.com, 30s cache
   api/quotes/stocks/route.ts        ← proxies Yahoo Finance, 60s cache; ?type=stock|cedear
   auth/callback/route.ts            ← Supabase OAuth callback handler
+  api/cron/keepalive/route.ts       ← daily Vercel Cron; trivial DB query so the
+                                      free-tier project is not paused for inactivity
 ```
 
 ### Data flow: Quotes (public)
@@ -82,4 +84,15 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY    # server-side only
 COINGECKO_API_KEY            # optional, for Pro API
+CRON_SECRET                  # optional; if set, /api/cron/keepalive requires it
 ```
+
+### Keep-alive
+
+Supabase pauses free-tier projects after ~7 days without database activity. The
+`/api/quotes/*` routes never touch Postgres, so public traffic does not count.
+`vercel.json` schedules `/api/cron/keepalive` daily to issue one `select` against
+`assets`. Daily is the highest frequency Vercel Hobby allows.
+
+`supabase/backup/export-data.sql` emits a portable dump of assets, transactions and
+profile preferences — the free tier keeps no point-in-time backups.
