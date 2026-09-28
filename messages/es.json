@@ -59,7 +59,6 @@
   },
   "portfolio": {
     "title": "Mi Portafolio",
-    "subtitle": "Segui tus inversiones e historial de transacciones",
     "addTransaction": "Agregar Transaccion",
     "noTransactions": "Sin transacciones aun. Agrega la primera!",
     "emptyTitle": "Comienza a trackear tus inversiones",
@@ -102,11 +101,8 @@
     "saving": "Guardando..."
   },
   "holdings": {
-    "totalUSD": "Valor Total (USD)",
     "totalARS": "Valor Total (ARS)",
     "blueRate": "Dolar Blue",
-    "profitLoss": "Ganancia / Perdida",
-    "allocation": "Distribucion del Portafolio",
     "holdingsTab": "Tenencias",
     "transactionsTab": "Transacciones",
     "noHoldings": "Sin tenencias. Agrega tu primera transaccion!",
@@ -114,7 +110,6 @@
     "category": "Categoria",
     "quantity": "Cantidad",
     "avgCost": "Costo Prom.",
-    "price": "Precio",
     "currentPrice": "Precio Actual",
     "valueUSD": "Valor USD",
     "valueARS": "Valor ARS",
@@ -128,6 +123,18 @@
     "currentValue": "Valor actual",
     "quantityLabel": "Cantidad",
     "closedPosition": "Cerrado",
-    "realizedPnl": "G/P Realizado"
+    "realizedPnl": "G/P realizada",
+    "analyticsTab": "Analisis",
+    "change24h": "24h",
+    "change24hLabel": "Cambio 24h",
+    "priceChange24h": "Precio / 24h",
+    "totalPnl": "G/P total",
+    "invested": "Invertido",
+    "unrealizedPnl": "G/P no realizada",
+    "allocationByAsset": "Distribucion por activo",
+    "allocationByCategory": "Distribucion por categoria",
+    "performance": "Rendimiento por activo",
+    "performanceHint": "No realizada en posiciones abiertas, realizada en cerradas",
+    "others": "Otros"
   }
 }

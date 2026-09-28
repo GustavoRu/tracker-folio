@@ -3,58 +3,42 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { formatCurrency } from "@/lib/utils";
-import { holdingKey, type Holding } from "@/lib/portfolio";
+import { computeHoldingPnl, holdingKey, type Holding } from "@/lib/portfolio";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
+import { AllocationBar, type AllocationItem } from "./AllocationBar";
 
-const COLORS = [
-  "#6366f1", // indigo
-  "#f59e0b", // amber
-  "#10b981", // emerald
-  "#ef4444", // red
-  "#8b5cf6", // violet
-  "#06b6d4", // cyan
-  "#f97316", // orange
-  "#ec4899", // pink
-  "#14b8a6", // teal
-  "#84cc16", // lime
+const SERIES_COLORS = [
+  "var(--series-1)",
+  "var(--series-2)",
+  "var(--series-3)",
+  "var(--series-4)",
+  "var(--series-5)",
+  "var(--series-6)",
+  "var(--series-7)",
 ];
-
-interface Slice {
-  key: string;
-  symbol: string;
-  name: string;
-  valueUSD: number;
-  percent: number;
-  color: string;
-}
+const OTHER_COLOR = "var(--series-other)";
+const OTHER_KEY = "__other";
 
 interface AllocationChartProps {
   holdings: Holding[];
   priceMap: Map<string, PriceInfo>;
   dolarBlueVenta: number;
-  isLoading: boolean;
 }
 
 function buildSlices(
   holdings: Holding[],
   priceMap: Map<string, PriceInfo>,
   dolarBlueVenta: number
-): Slice[] {
-  const items: { key: string; symbol: string; name: string; valueUSD: number }[] = [];
+): AllocationItem[] {
+  const items: { key: string; label: string; valueUSD: number }[] = [];
 
   for (const h of holdings) {
     const price = priceMap.get(holdingKey(h));
-    if (!price) continue;
+    if (h.quantity === 0 || !price) continue;
 
-    let valueUSD: number;
-    if (price.currency === "ARS" && dolarBlueVenta > 0) {
-      valueUSD = (h.quantity * price.currentPrice) / dolarBlueVenta;
-    } else {
-      valueUSD = h.quantity * price.currentPrice;
-    }
-
+    const { valueUSD } = computeHoldingPnl(h, price, dolarBlueVenta);
     if (valueUSD > 0) {
-      items.push({ key: holdingKey(h), symbol: h.symbol, name: h.name, valueUSD });
+      items.push({ key: holdingKey(h), label: h.symbol, valueUSD });
     }
   }
 
@@ -64,20 +48,34 @@ function buildSlices(
   if (total === 0) return [];
 
   return items.map((item, i) => ({
-    key: item.key,
-    symbol: item.symbol,
-    name: item.name,
-    valueUSD: item.valueUSD,
+    ...item,
     percent: (item.valueUSD / total) * 100,
-    color: COLORS[i % COLORS.length],
+    color: SERIES_COLORS[i] ?? OTHER_COLOR,
   }));
+}
+
+// Hues are never cycled: everything past the palette folds into one "Other" mark
+function foldSegments(slices: AllocationItem[], otherLabel: string): AllocationItem[] {
+  if (slices.length <= SERIES_COLORS.length) return slices;
+
+  const tail = slices.slice(SERIES_COLORS.length);
+  return [
+    ...slices.slice(0, SERIES_COLORS.length),
+    {
+      key: OTHER_KEY,
+      label: otherLabel,
+      valueUSD: tail.reduce((s, i) => s + i.valueUSD, 0),
+      percent: tail.reduce((s, i) => s + i.percent, 0),
+      color: OTHER_COLOR,
+    },
+  ];
 }
 
 function PieSlice({
   startAngle,
   endAngle,
   color,
-  isHovered,
+  isDimmed,
   onMouseEnter,
   onMouseLeave,
   radius = 80,
@@ -87,13 +85,25 @@ function PieSlice({
   startAngle: number;
   endAngle: number;
   color: string;
-  isHovered: boolean;
+  isDimmed: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   radius?: number;
   cx?: number;
   cy?: number;
 }) {
+  const handlers = {
+    onMouseEnter,
+    onMouseLeave,
+    opacity: isDimmed ? 0.4 : 1,
+    className: "cursor-pointer transition-opacity",
+  };
+
+  // A lone slice is a full circle, which an arc path cannot draw
+  if (endAngle - startAngle >= 359.99) {
+    return <circle cx={cx} cy={cy} r={radius} fill={color} {...handlers} />;
+  }
+
   const startRad = ((startAngle - 90) * Math.PI) / 180;
   const endRad = ((endAngle - 90) * Math.PI) / 180;
 
@@ -111,16 +121,15 @@ function PieSlice({
     "Z",
   ].join(" ");
 
+  // Surface-colored stroke is the 2px gap between slices
   return (
     <path
       d={d}
       fill={color}
-      opacity={isHovered ? 0.8 : 1}
-      stroke={isHovered ? "var(--color-foreground)" : "none"}
-      strokeWidth={isHovered ? 1.5 : 0}
-      className="cursor-pointer transition-opacity"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      stroke="var(--card)"
+      strokeWidth={2}
+      strokeLinejoin="round"
+      {...handlers}
     />
   );
 }
@@ -129,40 +138,36 @@ export function AllocationChart({
   holdings,
   priceMap,
   dolarBlueVenta,
-  isLoading,
 }: AllocationChartProps) {
   const t = useTranslations("holdings");
-  const [hoveredSymbol, setHoveredSymbol] = useState<string | null>(null);
-
-  if (isLoading) {
-    return (
-      <div className="h-64 animate-pulse rounded-xl border border-border bg-card" />
-    );
-  }
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   const slices = buildSlices(holdings, priceMap, dolarBlueVenta);
-
   if (slices.length === 0) return null;
 
-  const arcs = slices.reduce<
-    (Slice & { startAngle: number; endAngle: number })[]
-  >((acc, slice) => {
+  const segments = foldSegments(slices, t("others"));
+  const segmentKeyOf = (slice: AllocationItem) =>
+    slice.color === OTHER_COLOR ? OTHER_KEY : slice.key;
+
+  const arcs = segments.reduce<
+    (AllocationItem & { startAngle: number; endAngle: number })[]
+  >((acc, segment) => {
     const start = acc.length > 0 ? acc[acc.length - 1].endAngle : 0;
-    const sweep = (slice.percent / 100) * 360;
-    acc.push({ ...slice, startAngle: start, endAngle: start + sweep });
+    const sweep = (segment.percent / 100) * 360;
+    acc.push({ ...segment, startAngle: start, endAngle: start + sweep });
     return acc;
   }, []);
 
-  const hoveredSlice = hoveredSymbol
-    ? slices.find((s) => s.key === hoveredSymbol)
+  const hoveredSegment = hoveredKey
+    ? segments.find((s) => s.key === hoveredKey)
     : null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <h3 className="mb-4 text-sm font-medium text-muted-foreground">
-        {t("allocation")}
+        {t("allocationByAsset")}
       </h3>
-      {/* Desktop: pie + legend side by side */}
+      {/* Desktop: donut + legend side by side */}
       <div className="hidden items-center gap-6 sm:flex">
         <div className="relative shrink-0">
           <svg viewBox="0 0 200 200" className="h-56 w-56">
@@ -173,14 +178,14 @@ export function AllocationChart({
                   startAngle={arc.startAngle}
                   endAngle={arc.endAngle}
                   color={arc.color}
-                  isHovered={hoveredSymbol === arc.key}
-                  onMouseEnter={() => setHoveredSymbol(arc.key)}
-                  onMouseLeave={() => setHoveredSymbol(null)}
+                  isDimmed={hoveredKey !== null && hoveredKey !== arc.key}
+                  onMouseEnter={() => setHoveredKey(arc.key)}
+                  onMouseLeave={() => setHoveredKey(null)}
                 />
               ) : null
             )}
             <circle cx="100" cy="100" r="45" className="fill-card" />
-            {hoveredSlice && (
+            {hoveredSegment && (
               <>
                 <text
                   x="100"
@@ -188,7 +193,7 @@ export function AllocationChart({
                   textAnchor="middle"
                   className="fill-foreground text-[11px] font-semibold"
                 >
-                  {hoveredSlice.symbol}
+                  {hoveredSegment.label}
                 </text>
                 <text
                   x="100"
@@ -196,77 +201,50 @@ export function AllocationChart({
                   textAnchor="middle"
                   className="fill-muted-foreground text-[9px]"
                 >
-                  {formatCurrency(hoveredSlice.valueUSD, "USD")}
+                  {formatCurrency(hoveredSegment.valueUSD, "USD")}
                 </text>
               </>
             )}
           </svg>
         </div>
         <div className="grid w-full grid-cols-2 gap-3 lg:grid-cols-3">
-          {slices.map((slice) => (
-            <div
-              key={slice.key}
-              className={`flex items-start gap-2 rounded-md px-1.5 py-0.5 transition-colors ${
-                hoveredSymbol === slice.key ? "bg-muted" : ""
-              }`}
-              onMouseEnter={() => setHoveredSymbol(slice.key)}
-              onMouseLeave={() => setHoveredSymbol(null)}
-            >
+          {slices.map((slice) => {
+            const segmentKey = segmentKeyOf(slice);
+            return (
               <div
-                className="mt-1 h-3 w-3 shrink-0 rounded-sm"
-                style={{ backgroundColor: slice.color }}
-              />
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-medium text-foreground">
-                    {slice.symbol}
-                  </span>
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    {slice.percent.toFixed(1)}%
+                key={slice.key}
+                className={`flex items-start gap-2 rounded-md px-1.5 py-0.5 transition-colors ${
+                  hoveredKey === segmentKey ? "bg-muted" : ""
+                }`}
+                onMouseEnter={() => setHoveredKey(segmentKey)}
+                onMouseLeave={() => setHoveredKey(null)}
+              >
+                <div
+                  className="mt-1 h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: slice.color }}
+                />
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      {slice.label}
+                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {slice.percent.toFixed(1)}%
+                    </span>
+                  </div>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {formatCurrency(slice.valueUSD, "USD")}
                   </span>
                 </div>
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {formatCurrency(slice.valueUSD, "USD")}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Mobile: compact horizontal bar + list */}
+      {/* Mobile: stacked bar + full legend */}
       <div className="sm:hidden">
-        {/* Mini stacked bar */}
-        <div className="mb-4 flex h-3 overflow-hidden rounded-full">
-          {slices.map((slice) => (
-            <div
-              key={slice.key}
-              style={{ width: `${slice.percent}%`, backgroundColor: slice.color }}
-            />
-          ))}
-        </div>
-        {/* Compact legend list */}
-        <div className="space-y-2">
-          {slices.map((slice) => (
-            <div key={slice.key} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                  style={{ backgroundColor: slice.color }}
-                />
-                <span className="text-sm font-medium text-foreground">{slice.symbol}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm tabular-nums text-foreground">
-                  {formatCurrency(slice.valueUSD, "USD")}
-                </span>
-                <span className="w-14 text-right text-xs tabular-nums text-muted-foreground">
-                  {slice.percent.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <AllocationBar segments={segments} legend={slices} />
       </div>
     </div>
   );

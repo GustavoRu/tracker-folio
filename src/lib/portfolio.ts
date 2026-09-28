@@ -3,6 +3,8 @@ import type { AssetCategory } from "@/types/quote";
 export interface PriceInfo {
   currentPrice: number;
   currency: "USD" | "ARS";
+  // Percent change over the last 24h; null when the source has no history
+  change24h: number | null;
 }
 
 // Symbols can repeat across categories (e.g. MELI stock vs MELI cedear),
@@ -112,6 +114,7 @@ export interface HoldingPnl {
   costBasisUSD: number;
   pnlAbsolute: number;
   pnlPct: number;
+  change24hUSD: number;
 }
 
 export function computeHoldingPnl(
@@ -136,6 +139,7 @@ export function computeHoldingPnl(
       costBasisUSD,
       pnlAbsolute,
       pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+      change24hUSD: 0,
     };
   }
 
@@ -152,6 +156,13 @@ export function computeHoldingPnl(
   const costBasisUSD = holding.totalCost * convFactor;
   const pnlAbsolute = valueUSD - costBasisUSD;
 
+  // ARS-priced assets ignore the blue rate's own 24h move
+  const change24h = price?.change24h ?? null;
+  const change24hUSD =
+    change24h !== null && change24h > -100
+      ? valueUSD - valueUSD / (1 + change24h / 100)
+      : 0;
+
   return {
     isClosed,
     valueUSD,
@@ -159,5 +170,66 @@ export function computeHoldingPnl(
     costBasisUSD,
     pnlAbsolute,
     pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+    change24hUSD,
+  };
+}
+
+export interface PortfolioTotals {
+  totalValueUSD: number;
+  totalValueARS: number;
+  // Cost basis of open positions only
+  investedUSD: number;
+  pnlAbsolute: number;
+  pnlPct: number;
+  unrealizedPnl: number;
+  realizedPnl: number;
+  change24hUSD: number;
+  change24hPct: number;
+}
+
+export function computePortfolioTotals(
+  holdings: Holding[],
+  priceMap: Map<string, PriceInfo>,
+  dolarBlueVenta: number
+): PortfolioTotals {
+  let totalValueUSD = 0;
+  let totalCostBasisUSD = 0;
+  let investedUSD = 0;
+  let unrealizedPnl = 0;
+  let realizedPnl = 0;
+  let change24hUSD = 0;
+
+  // Total P&L = sum of the per-row P&L shown in HoldingsTable:
+  // unrealized for open positions, realized for closed ones.
+  for (const h of holdings) {
+    const price = priceMap.get(holdingKey(h));
+    if (h.quantity > 0 && !price) continue;
+
+    const pnl = computeHoldingPnl(h, price, dolarBlueVenta);
+    totalValueUSD += pnl.valueUSD;
+    totalCostBasisUSD += pnl.costBasisUSD;
+    change24hUSD += pnl.change24hUSD;
+
+    if (pnl.isClosed) {
+      realizedPnl += pnl.pnlAbsolute;
+    } else {
+      investedUSD += pnl.costBasisUSD;
+      unrealizedPnl += pnl.pnlAbsolute;
+    }
+  }
+
+  const pnlAbsolute = unrealizedPnl + realizedPnl;
+  const valueYesterday = totalValueUSD - change24hUSD;
+
+  return {
+    totalValueUSD,
+    totalValueARS: totalValueUSD * dolarBlueVenta,
+    investedUSD,
+    pnlAbsolute,
+    pnlPct: totalCostBasisUSD > 0 ? (pnlAbsolute / totalCostBasisUSD) * 100 : 0,
+    unrealizedPnl,
+    realizedPnl,
+    change24hUSD,
+    change24hPct: valueYesterday > 0 ? (change24hUSD / valueYesterday) * 100 : 0,
   };
 }

@@ -5,7 +5,9 @@ interface YahooChartResult {
   meta: {
     symbol: string;
     regularMarketPrice: number;
-    previousClose: number;
+    previousClose?: number;
+    // With range=1d this is the prior session's close; Yahoo often omits previousClose
+    chartPreviousClose?: number;
   };
 }
 
@@ -62,7 +64,7 @@ async function fetchTickerGroup(
     const result = results[index];
     const meta = result.status === "fulfilled" ? result.value : null;
     const price = meta?.regularMarketPrice ?? 0;
-    const prevClose = meta?.previousClose ?? 0;
+    const prevClose = meta?.previousClose ?? meta?.chartPreviousClose ?? 0;
     const change = prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : null;
     const symbol = t.ticker.replace(".BA", "");
 

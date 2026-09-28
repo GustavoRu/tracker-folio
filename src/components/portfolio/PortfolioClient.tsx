@@ -7,10 +7,20 @@ import { AddTransactionModal } from "./AddTransactionModal";
 import { TransactionList } from "./TransactionList";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { HoldingsTable } from "./HoldingsTable";
-import { AllocationChart } from "./AllocationChart";
+import { PortfolioAnalytics } from "./PortfolioAnalytics";
 import { AssetDetailView } from "./AssetDetailView";
 import { holdingKey, type Holding } from "@/lib/portfolio";
+import { cn } from "@/lib/utils";
 import type { AssetCategory } from "@/types/quote";
+
+const TABS = ["holdings", "analytics", "transactions"] as const;
+type Tab = (typeof TABS)[number];
+
+const TAB_MESSAGE_KEYS: Record<Tab, string> = {
+  holdings: "holdingsTab",
+  analytics: "analyticsTab",
+  transactions: "transactionsTab",
+};
 
 interface TransactionRow {
   id: string;
@@ -36,14 +46,19 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
   const t = useTranslations("portfolio");
   const ht = useTranslations("holdings");
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"holdings" | "transactions">("holdings");
+  const [activeTab, setActiveTab] = useState<Tab>("holdings");
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
   const { priceMap, iconMap, dolarBlueVenta, isLoading } = usePortfolioPrices(holdings);
 
-  const handleTabChange = (tab: "holdings" | "transactions") => {
+  const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     setSelectedAsset(null);
+  };
+
+  const openAssetDetail = (key: string) => {
+    setActiveTab("holdings");
+    setSelectedAsset(key);
   };
 
   // selectedAsset holds a holdingKey (category:symbol) — symbols repeat across categories
@@ -56,12 +71,19 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
     : transactions;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 pb-24 sm:pb-0">
+      {/* Compact CoinGecko-style header: title, total, 24h and total P&L */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">{t("subtitle")}</p>
+          <h1 className="text-sm font-medium text-muted-foreground">{t("title")}</h1>
+          {holdings.length > 0 && (
+            <PortfolioSummary
+              holdings={holdings}
+              priceMap={priceMap}
+              dolarBlueVenta={dolarBlueVenta}
+              isLoading={isLoading}
+            />
+          )}
         </div>
         {/* Desktop button */}
         <button
@@ -96,76 +118,76 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
         </svg>
       </button>
 
-      {/* Summary cards */}
-      {holdings.length > 0 && (
-        <PortfolioSummary
-          holdings={holdings}
-          priceMap={priceMap}
-          dolarBlueVenta={dolarBlueVenta}
-          isLoading={isLoading}
-        />
-      )}
-
-      {/* Allocation chart - full width */}
-      {holdings.length > 0 && (
-        <AllocationChart
-          holdings={holdings}
-          priceMap={priceMap}
-          dolarBlueVenta={dolarBlueVenta}
-          isLoading={isLoading}
-        />
-      )}
-
       {/* Tab switcher + content */}
       {holdings.length > 0 && (
         <div>
-          {/* Tab switcher */}
-          <div className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
-            <button
-              onClick={() => handleTabChange("holdings")}
-              className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                activeTab === "holdings"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {ht("holdingsTab")}
-            </button>
-            <button
-              onClick={() => handleTabChange("transactions")}
-              className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                activeTab === "transactions"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {ht("transactionsTab")}
-            </button>
+          {/* Text tabs with an accent underline, as in CoinGecko */}
+          <div role="tablist" className="mb-4 flex gap-6 border-b border-border">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  id={`portfolio-tab-${tab}`}
+                  aria-selected={isActive}
+                  aria-controls="portfolio-tabpanel"
+                  onClick={() => handleTabChange(tab)}
+                  className={cn(
+                    "relative -mb-px pb-2.5 text-[15px] transition-colors",
+                    isActive
+                      ? "font-semibold text-foreground"
+                      : "font-medium text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {ht(TAB_MESSAGE_KEYS[tab])}
+                  {isActive && (
+                    <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-accent" />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {activeTab === "holdings" ? (
-            selectedHolding ? (
-              <AssetDetailView
-                holding={selectedHolding}
-                priceInfo={priceMap.get(selectedAsset!)}
-                iconUrl={iconMap.get(selectedAsset!)}
-                dolarBlueVenta={dolarBlueVenta}
-                transactions={filteredTransactions}
-                onBack={() => setSelectedAsset(null)}
-              />
-            ) : (
-              <HoldingsTable
+          <div
+            role="tabpanel"
+            id="portfolio-tabpanel"
+            aria-labelledby={`portfolio-tab-${activeTab}`}
+          >
+            {activeTab === "holdings" ? (
+              selectedHolding ? (
+                <AssetDetailView
+                  holding={selectedHolding}
+                  priceInfo={priceMap.get(selectedAsset!)}
+                  iconUrl={iconMap.get(selectedAsset!)}
+                  dolarBlueVenta={dolarBlueVenta}
+                  transactions={filteredTransactions}
+                  onBack={() => setSelectedAsset(null)}
+                />
+              ) : (
+                <HoldingsTable
+                  holdings={holdings}
+                  priceMap={priceMap}
+                  iconMap={iconMap}
+                  dolarBlueVenta={dolarBlueVenta}
+                  isLoading={isLoading}
+                  onSelectAsset={setSelectedAsset}
+                />
+              )
+            ) : activeTab === "analytics" ? (
+              <PortfolioAnalytics
                 holdings={holdings}
                 priceMap={priceMap}
                 iconMap={iconMap}
                 dolarBlueVenta={dolarBlueVenta}
                 isLoading={isLoading}
-                onSelectAsset={setSelectedAsset}
+                onSelectAsset={openAssetDetail}
               />
-            )
-          ) : (
-            <TransactionList transactions={transactions} />
-          )}
+            ) : (
+              <TransactionList transactions={transactions} />
+            )}
+          </div>
         </div>
       )}
 

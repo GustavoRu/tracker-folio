@@ -32,7 +32,7 @@ export async function fetchCryptoPrices(): Promise<Quote[]> {
   // Build a lookup from the API response
   const marketMap = new Map(data.map((coin) => [coin.id, coin]));
 
-  return CRYPTO_IDS.map((coin, index) => {
+  const quotes = CRYPTO_IDS.map((coin) => {
     const market = marketMap.get(coin.id);
     return {
       symbol: coin.symbol,
@@ -44,7 +44,11 @@ export async function fetchCryptoPrices(): Promise<Quote[]> {
       marketCap: market?.market_cap ?? null,
       volume24h: market?.total_volume ?? null,
       currency: "USD" as const,
-      rank: index + 1,
+      rank: 0,
     };
   });
+
+  // Catalog order is arbitrary, so rank by market cap (unknown caps last)
+  quotes.sort((a, b) => (b.marketCap ?? -1) - (a.marketCap ?? -1));
+  return quotes.map((q, index) => ({ ...q, rank: index + 1 }));
 }

@@ -9,6 +9,20 @@ import type { Holding } from "@/lib/portfolio";
 
 const STABLECOINS = ["USDT", "USDC", "USD"];
 
+// Derived fields drop trailing zeros: 1 not 1.00, while 1.1 or 0.001 keep their digits
+function toInputValue(value: number, maxDecimals: number): string {
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: maxDecimals,
+    useGrouping: false,
+  });
+}
+
+// Cents are enough above $1; below it, rounding to cents would zero out small buys
+function deriveTotal(quantity: number, price: number): string {
+  const total = quantity * price;
+  return toInputValue(total, total >= 1 ? 2 : 8);
+}
+
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
@@ -51,7 +65,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
     const q = parseFloat(val);
     const p = parseFloat(price);
     if (!isNaN(q) && !isNaN(p) && q >= 0 && p >= 0) {
-      setTotal((q * p).toFixed(2));
+      setTotal(deriveTotal(q, p));
     }
   };
 
@@ -60,7 +74,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
     const q = parseFloat(quantity);
     const p = parseFloat(val);
     if (!isNaN(q) && !isNaN(p) && q >= 0 && p >= 0) {
-      setTotal((q * p).toFixed(2));
+      setTotal(deriveTotal(q, p));
     }
   };
 
@@ -71,9 +85,9 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
     const p = parseFloat(price);
     if (!isNaN(tot) && tot > 0) {
       if (!isNaN(q) && q > 0) {
-        setPrice((tot / q).toFixed(8));
+        setPrice(toInputValue(tot / q, 8));
       } else if (!isNaN(p) && p > 0) {
-        setQuantity((tot / p).toFixed(8));
+        setQuantity(toInputValue(tot / p, 8));
       }
     }
   };
@@ -281,7 +295,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
 
           {/* Currency + Date row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+            <div className="min-w-0 space-y-1.5">
               <label className="block text-sm font-medium text-foreground">
                 {t("currency")}
               </label>
@@ -294,7 +308,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
                 <option value="ARS">ARS</option>
               </select>
             </div>
-            <div className="space-y-1.5">
+            <div className="min-w-0 space-y-1.5">
               <label className="block text-sm font-medium text-foreground">
                 {t("date")}
               </label>
@@ -303,7 +317,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                className="block w-full min-w-0 appearance-none rounded-lg text-left [&::-webkit-date-and-time-value]:text-left border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>

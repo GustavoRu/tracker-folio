@@ -1,24 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { formatCompact, formatCurrency, formatPercent } from "@/lib/utils";
+import { formatCurrency, formatCurrencyCompact, formatPercent } from "@/lib/utils";
 import { computeHoldingPnl, holdingKey, type Holding } from "@/lib/portfolio";
 import { AssetIcon } from "@/components/ui/AssetIcon";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  crypto: "Crypto",
-  stock: "Stock",
-  cedear: "CEDEAR",
-  dolar: "Dolar",
-};
-
-const CATEGORY_BADGE_STYLES: Record<string, string> = {
-  crypto: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  stock: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-  cedear: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  dolar: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-};
+import { CATEGORY_BADGE_STYLES, CATEGORY_LABELS } from "./categories";
+import { ChangeIndicator } from "./ChangeIndicator";
 
 function formatQuantity(quantity: number): string {
   return quantity.toLocaleString(undefined, {
@@ -34,24 +22,6 @@ function formatQuantityCompact(quantity: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits,
   });
-}
-
-// "ARS 1,234,567.89" does not fit on mobile: shorten the prefix, go compact when huge
-function formatCurrencyCompact(value: number, currency: "USD" | "ARS"): string {
-  const prefix = currency === "ARS" ? "AR$" : "$";
-
-  if (Math.abs(value) >= 100_000) {
-    return `${prefix}${formatCompact(value)}`;
-  }
-
-  const small = value !== 0 && Math.abs(value) < 1;
-  return (
-    prefix +
-    value.toLocaleString("en-US", {
-      minimumFractionDigits: small ? 4 : 2,
-      maximumFractionDigits: small ? 6 : 2,
-    })
-  );
 }
 
 interface HoldingsTableProps {
@@ -99,6 +69,7 @@ export function HoldingsTable({
       iconUrl: iconMap.get(key) ?? null,
       currentPrice: price?.currentPrice ?? 0,
       priceCurrency: price?.currency ?? ("USD" as const),
+      change24h: price?.change24h ?? null,
       badgeStyle:
         CATEGORY_BADGE_STYLES[h.category] ?? "bg-muted text-muted-foreground",
       isGain: pnl.isClosed ? pnl.pnlAbsolute >= 0 : pnl.pnlPct >= 0,
@@ -106,24 +77,30 @@ export function HoldingsTable({
     };
   });
 
+  // Open positions by current value, like CoinGecko's "Holdings" sort; closed keep their order
+  rows.sort((a, b) => {
+    if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
+    return a.isClosed ? 0 : b.valueUSD - a.valueUSD;
+  });
+
   return (
     <>
-      {/* Mobile: asset / price / holdings, in the CoinGecko layout */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card sm:hidden">
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      {/* Mobile: flat asset / price·24h / holdings list, in the CoinGecko layout */}
+      <div className="sm:hidden">
+        <div className="flex items-center gap-2 pb-2 text-xs font-medium text-muted-foreground">
           <span className="flex-1">{t("asset")}</span>
-          <span className="w-[27%] text-right">{t("price")}</span>
+          <span className="w-[27%] text-right">{t("priceChange24h")}</span>
           <span className="w-[34%] text-right">{t("holdingsLabel")}</span>
         </div>
 
-        <div className="divide-y divide-border">
+        <div>
           {rows.map((row) => (
             <button
               key={row.key}
               type="button"
               onClick={() => onSelectAsset?.(row.key)}
               disabled={!onSelectAsset}
-              className={`flex w-full items-center gap-2 px-3 py-3 text-left transition-colors active:bg-card-hover ${row.isClosed ? "opacity-55" : ""}`}
+              className={`-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-lg px-2 py-3 text-left transition-colors active:bg-card-hover ${row.isClosed ? "opacity-55" : ""}`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <AssetIcon
@@ -153,11 +130,10 @@ export function HoldingsTable({
                     : formatCurrencyCompact(row.currentPrice, row.priceCurrency)}
                 </p>
                 {!row.isClosed && (
-                  <p
-                    className={`font-mono text-[11px] tabular-nums ${row.isGain ? "text-gain" : "text-loss"}`}
-                  >
-                    {formatPercent(row.pnlPct)}
-                  </p>
+                  <ChangeIndicator
+                    value={row.change24h}
+                    className="justify-end text-[11px]"
+                  />
                 )}
               </div>
 
@@ -190,6 +166,7 @@ export function HoldingsTable({
               <th className="px-4 py-3 text-right">{t("quantity")}</th>
               <th className="px-4 py-3 text-right">{t("avgCost")}</th>
               <th className="px-4 py-3 text-right">{t("currentPrice")}</th>
+              <th className="px-4 py-3 text-right">{t("change24h")}</th>
               <th className="px-4 py-3 text-right">{t("value")}</th>
               <th className="px-4 py-3 text-right sm:px-6">{t("pnl")}</th>
             </tr>
@@ -234,6 +211,9 @@ export function HoldingsTable({
                 </td>
                 <td className="px-4 py-4 text-right font-mono text-sm tabular-nums text-foreground">
                   {row.isClosed ? "—" : row.currentPrice > 0 ? formatCurrency(row.currentPrice, row.priceCurrency) : "—"}
+                </td>
+                <td className="px-4 py-4 text-right text-sm">
+                  <ChangeIndicator value={row.isClosed ? null : row.change24h} />
                 </td>
                 <td className="px-4 py-4 text-right">
                   {row.isClosed ? (

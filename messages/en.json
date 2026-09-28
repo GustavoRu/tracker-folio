@@ -59,7 +59,6 @@
   },
   "portfolio": {
     "title": "My Portfolio",
-    "subtitle": "Track your investments and transaction history",
     "addTransaction": "Add Transaction",
     "noTransactions": "No transactions yet. Add your first one!",
     "emptyTitle": "Start tracking your investments",
@@ -102,11 +101,8 @@
     "saving": "Saving..."
   },
   "holdings": {
-    "totalUSD": "Total Value (USD)",
     "totalARS": "Total Value (ARS)",
     "blueRate": "Blue Rate",
-    "profitLoss": "Profit / Loss",
-    "allocation": "Portfolio Allocation",
     "holdingsTab": "Holdings",
     "transactionsTab": "Transactions",
     "noHoldings": "No holdings yet. Add your first transaction!",
@@ -114,7 +110,6 @@
     "category": "Category",
     "quantity": "Quantity",
     "avgCost": "Avg. Cost",
-    "price": "Price",
     "currentPrice": "Current Price",
     "valueUSD": "Value USD",
     "valueARS": "Value ARS",
@@ -128,6 +123,18 @@
     "currentValue": "Current value",
     "quantityLabel": "Quantity",
     "closedPosition": "Closed",
-    "realizedPnl": "Realized P&L"
+    "realizedPnl": "Realized P&L",
+    "analyticsTab": "Analytics",
+    "change24h": "24h",
+    "change24hLabel": "24h change",
+    "priceChange24h": "Price / 24h",
+    "totalPnl": "Total P&L",
+    "invested": "Invested",
+    "unrealizedPnl": "Unrealized P&L",
+    "allocationByAsset": "Allocation by asset",
+    "allocationByCategory": "Allocation by category",
+    "performance": "Performance by asset",
+    "performanceHint": "Unrealized on open positions, realized on closed ones",
+    "others": "Others"
   }
 }

@@ -69,6 +69,7 @@ export function usePortfolioPrices(holdings: Holding[]) {
     priceMap.set(holdingKey(q), {
       currentPrice: q.price,
       currency: q.currency,
+      change24h: q.priceChange24h,
     });
     iconMap.set(holdingKey(q), q.iconUrl);
   }
@@ -77,6 +78,7 @@ export function usePortfolioPrices(holdings: Holding[]) {
   priceMap.set(holdingKey({ category: "dolar", symbol: "USD" }), {
     currentPrice: 1,
     currency: "USD",
+    change24h: 0,
   });
 
   // Dolar types: use venta price in ARS
@@ -91,9 +93,11 @@ export function usePortfolioPrices(holdings: Holding[]) {
   for (const d of dolarRates) {
     const sym = labelToSymbol[d.type];
     if (sym) {
+      // dolarapi has no history, so there is no 24h change to report
       priceMap.set(holdingKey({ category: "dolar", symbol: sym }), {
         currentPrice: d.venta,
         currency: "ARS",
+        change24h: null,
       });
     }
   }

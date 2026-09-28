@@ -5,6 +5,7 @@ import { formatCurrency, formatPercent } from "@/lib/utils";
 import { TransactionList } from "./TransactionList";
 import { computeHoldingPnl, type Holding } from "@/lib/portfolio";
 import { AssetIcon } from "@/components/ui/AssetIcon";
+import { ChangeIndicator } from "./ChangeIndicator";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
 
 interface TransactionRow {
@@ -84,6 +85,12 @@ export function AssetDetailView({
           <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
             {currentPrice > 0 ? formatCurrency(currentPrice, priceCurrency) : "-"}
           </p>
+          {currentPrice > 0 && (
+            <p className="mt-0.5 text-xs">
+              <ChangeIndicator value={priceInfo?.change24h ?? null} />{" "}
+              <span className="text-muted-foreground">{t("change24h")}</span>
+            </p>
+          )}
         </div>
 
         {/* Quantity */}

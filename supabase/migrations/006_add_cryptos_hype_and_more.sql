@@ -1,0 +1,26 @@
+-- Add HYPE plus the CoinGecko portfolio coins missing from the catalog.
+INSERT INTO public.assets (symbol, name, category, coingecko_id, rank) VALUES
+  ('HYPE',   'Hyperliquid',     'crypto', 'hyperliquid',             25),
+  ('RENDER', 'Render',          'crypto', 'render-token',            26),
+  ('RAY',    'Raydium',         'crypto', 'raydium',                 27),
+  ('AR',     'Arweave',         'crypto', 'arweave',                 28),
+  ('ARKM',   'Arkham',          'crypto', 'arkham',                  29),
+  ('VELO',   'Velo',            'crypto', 'velo',                    30),
+  ('ROSE',   'Oasis',           'crypto', 'oasis-network',           31),
+  ('CPOOL',  'Clearpool',       'crypto', 'clearpool',               32),
+  ('ORDER',  'Orderly',         'crypto', 'orderly-network',         33),
+  ('AGIX',   'SingularityNET',  'crypto', 'singularitynet',          34),
+  ('GLQ',    'GraphLinq Chain', 'crypto', 'graphlinq-protocol',      35),
+  ('SLAY',   'SatLayer',        'crypto', 'satlayer',                36),
+  ('ZEC',    'Zcash',           'crypto', 'zcash',                   37),
+  ('CC',     'Canton',          'crypto', 'canton-network',          38),
+  ('TAO',    'Bittensor',       'crypto', 'bittensor',               39),
+  ('AAVE',   'Aave',            'crypto', 'aave',                    40),
+  ('ASTER',  'Aster',           'crypto', 'aster-2',                 41),
+  ('KAS',    'Kaspa',           'crypto', 'kaspa',                   42),
+  ('NEXO',   'Nexo',            'crypto', 'nexo',                    43),
+  ('ARB',    'Arbitrum',        'crypto', 'arbitrum',                44),
+  ('ENA',    'Ethena',          'crypto', 'ethena',                  45),
+  ('JUP',    'Jupiter',         'crypto', 'jupiter-exchange-solana', 46),
+  ('CETUS',  'Cetus Protocol',  'crypto', 'cetus-protocol',          47)
+ON CONFLICT (symbol, category) DO NOTHING;
