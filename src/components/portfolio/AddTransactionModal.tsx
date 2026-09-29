@@ -5,9 +5,7 @@ import { useTranslations } from "next-intl";
 import { addTransactions } from "@/app/[locale]/(private)/portfolio/actions";
 import { AssetCombobox } from "@/components/ui/AssetCombobox";
 import type { AssetOption } from "@/lib/constants";
-import type { Holding } from "@/lib/portfolio";
-
-const STABLECOINS = ["USDT", "USDC", "USD"];
+import { isCashLike, type Holding } from "@/lib/portfolio";
 
 // Derived fields drop trailing zeros: 1 not 1.00, while 1.1 or 0.001 keep their digits
 function toInputValue(value: number, maxDecimals: number): string {
@@ -97,7 +95,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
     .filter(
       (h) =>
         h.quantity > 0 &&
-        STABLECOINS.includes(h.symbol) &&
+        isCashLike(h) &&
         h.symbol !== selectedAsset?.symbol
     )
     .map((h) => h.symbol);
@@ -105,7 +103,7 @@ export function AddTransactionModal({ open, onClose, holdings }: AddTransactionM
   const showCounterpart =
     availableStablecoins.length > 0 &&
     selectedAsset !== null &&
-    !STABLECOINS.includes(selectedAsset.symbol) &&
+    !isCashLike(selectedAsset) &&
     parseFloat(total) > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {

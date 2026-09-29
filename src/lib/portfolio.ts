@@ -13,6 +13,13 @@ export function holdingKey(h: { symbol: string; category: AssetCategory }): stri
   return `${h.category}:${h.symbol}`;
 }
 
+// Stablecoins and USD cash are the money side of every trade: gains belong
+// to the asset bought or sold, so these never report P&L of their own.
+export function isCashLike(a: { symbol: string; category: AssetCategory }): boolean {
+  if (a.category === "crypto") return a.symbol === "USDT" || a.symbol === "USDC";
+  return a.category === "dolar" && a.symbol === "USD";
+}
+
 export interface Holding {
   symbol: string;
   name: string;
@@ -134,8 +141,9 @@ export function computeHoldingPnl(
       ? 1 / dolarBlueVenta
       : 1;
 
-  const totalBoughtUSD = holding.originalTotalCost * convFactor;
-  const realizedPnl = holding.realizedPnl * convFactor;
+  const cashLike = isCashLike(holding);
+  const totalBoughtUSD = cashLike ? 0 : holding.originalTotalCost * convFactor;
+  const realizedPnl = cashLike ? 0 : holding.realizedPnl * convFactor;
 
   if (isClosed) {
     return {
@@ -161,7 +169,8 @@ export function computeHoldingPnl(
     valueUSD = holding.quantity * currentPrice;
   }
 
-  const costBasisUSD = holding.totalCost * convFactor;
+  // Cash is carried at market value, so a stray peso-priced entry cannot fake a gain
+  const costBasisUSD = cashLike ? valueUSD : holding.totalCost * convFactor;
   const unrealizedPnl = valueUSD - costBasisUSD;
   const pnlAbsolute = unrealizedPnl + realizedPnl;
 

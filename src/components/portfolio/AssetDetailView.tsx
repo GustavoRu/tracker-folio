@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
 import { TransactionList } from "./TransactionList";
-import { breakEvenPrice, computeHoldingPnl, type Holding } from "@/lib/portfolio";
+import { breakEvenPrice, computeHoldingPnl, isCashLike, type Holding } from "@/lib/portfolio";
 import { AssetIcon } from "@/components/ui/AssetIcon";
 import { ChangeIndicator } from "./ChangeIndicator";
 import type { PriceInfo } from "@/hooks/usePortfolioPrices";
@@ -81,10 +81,10 @@ export function AssetDetailView({
   const unrealizedPct =
     pnl.costBasisUSD > 0 && !pnl.isClosed ? (pnl.unrealizedPnl / pnl.costBasisUSD) * 100 : 0;
   const breakEven = breakEvenPrice(holding);
-  const showBreakEven = !pnl.isClosed && holding.realizedPnl !== 0;
+  const showBreakEven = !pnl.isClosed && pnl.realizedPnl !== 0;
 
   // Selling at the current price turns that share of unrealized P&L into realized
-  const canSimulate = !pnl.isClosed && currentPrice > 0;
+  const canSimulate = !pnl.isClosed && currentPrice > 0 && !isCashLike(holding);
   const simGain = pnl.unrealizedPnl * sellFraction;
 
   return (
