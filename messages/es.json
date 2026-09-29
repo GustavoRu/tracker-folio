@@ -136,5 +136,8 @@
     "performance": "Rendimiento por activo",
     "performanceHint": "No realizada en posiciones abiertas, realizada en cerradas",
     "others": "Otros"
+  },
+  "attribution": {
+    "cryptoPrices": "Precios de crypto provistos por <link>CoinGecko</link>"
   }
 }

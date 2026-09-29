@@ -28,7 +28,7 @@ src/app/
     layout.tsx                      ← auth guard (server component)
     page.tsx                        ← computes holdings server-side, passes to PortfolioClient
     actions.ts                      ← Server Actions: addTransaction, deleteTransaction
-  api/quotes/crypto/route.ts        ← proxies CoinGecko, 30s in-memory cache
+  api/quotes/crypto/route.ts        ← proxies CoinGecko, 60s in-memory cache
   api/quotes/dolar/route.ts         ← proxies dolarapi.com, 30s cache
   api/quotes/stocks/route.ts        ← proxies Yahoo Finance, 60s cache; ?type=stock|cedear
   auth/callback/route.ts            ← Supabase OAuth callback handler
@@ -83,7 +83,7 @@ Tailwind CSS v4. Dark mode via `@custom-variant dark (&:is(.dark *))` — no `da
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY    # server-side only
-COINGECKO_API_KEY            # optional, for Pro API
+COINGECKO_API_KEY            # required: free Demo key (sent as x-cg-demo-api-key); keyless calls get 403
 CRON_SECRET                  # optional; if set, /api/cron/keepalive requires it
 ```
 

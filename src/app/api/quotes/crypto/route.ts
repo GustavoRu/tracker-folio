@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { fetchCryptoPrices } from "@/lib/api/coingecko";
 
 let cache: { data: unknown; timestamp: number } = { data: null, timestamp: 0 };
-const TTL = 30_000;
+// CoinGecko Demo data refreshes every 60s and calls are metered monthly
+const TTL = 60_000;
 
 export async function GET() {
   try {

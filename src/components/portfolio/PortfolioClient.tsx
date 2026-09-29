@@ -11,6 +11,7 @@ import { PortfolioAnalytics } from "./PortfolioAnalytics";
 import { AssetDetailView } from "./AssetDetailView";
 import { holdingKey, type Holding } from "@/lib/portfolio";
 import { cn } from "@/lib/utils";
+import { CoinGeckoAttribution } from "@/components/ui/CoinGeckoAttribution";
 import type { AssetCategory } from "@/types/quote";
 
 const TABS = ["holdings", "analytics", "transactions"] as const;
@@ -188,6 +189,11 @@ export function PortfolioClient({ transactions, holdings }: PortfolioClientProps
               <TransactionList transactions={transactions} />
             )}
           </div>
+
+          {/* Header totals use crypto prices on every tab */}
+          {holdings.some((h) => h.category === "crypto") && (
+            <CoinGeckoAttribution className="mt-4" />
+          )}
         </div>
       )}
 

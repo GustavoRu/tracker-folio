@@ -3,6 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { holdingKey, type Holding, type PriceInfo } from "@/lib/portfolio";
 import type { Quote, DolarQuote } from "@/types/quote";
+import { POLLING_INTERVALS } from "@/lib/constants";
 
 export type { PriceInfo };
 
@@ -23,7 +24,7 @@ export function usePortfolioPrices(holdings: Holding[]) {
         queryFn: () => fetchJSON<Quote[]>("/api/quotes/crypto"),
         enabled: categories.has("crypto"),
         staleTime: 30_000,
-        refetchInterval: 30_000,
+        refetchInterval: POLLING_INTERVALS.crypto,
       },
       {
         queryKey: ["quotes", "stock"],

@@ -136,5 +136,8 @@
     "performance": "Performance by asset",
     "performanceHint": "Unrealized on open positions, realized on closed ones",
     "others": "Others"
+  },
+  "attribution": {
+    "cryptoPrices": "Crypto price data by <link>CoinGecko</link>"
   }
 }
