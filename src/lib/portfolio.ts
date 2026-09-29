@@ -111,8 +111,14 @@ export interface HoldingPnl {
   isClosed: boolean;
   valueUSD: number;
   valueARS: number;
+  // Cost of the units still held (of every unit bought, once closed)
   costBasisUSD: number;
+  unrealizedPnl: number;
+  // Locked in by sells, partial or full
+  realizedPnl: number;
+  // Unrealized + realized
   pnlAbsolute: number;
+  // pnlAbsolute over the cost of every unit ever bought
   pnlPct: number;
   change24hUSD: number;
 }
@@ -128,17 +134,19 @@ export function computeHoldingPnl(
       ? 1 / dolarBlueVenta
       : 1;
 
+  const totalBoughtUSD = holding.originalTotalCost * convFactor;
+  const realizedPnl = holding.realizedPnl * convFactor;
+
   if (isClosed) {
-    // Closed position: realized P&L over the original cost basis
-    const costBasisUSD = holding.originalTotalCost * convFactor;
-    const pnlAbsolute = holding.realizedPnl * convFactor;
     return {
       isClosed,
       valueUSD: 0,
       valueARS: 0,
-      costBasisUSD,
-      pnlAbsolute,
-      pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+      costBasisUSD: totalBoughtUSD,
+      unrealizedPnl: 0,
+      realizedPnl,
+      pnlAbsolute: realizedPnl,
+      pnlPct: totalBoughtUSD > 0 ? (realizedPnl / totalBoughtUSD) * 100 : 0,
       change24hUSD: 0,
     };
   }
@@ -154,7 +162,8 @@ export function computeHoldingPnl(
   }
 
   const costBasisUSD = holding.totalCost * convFactor;
-  const pnlAbsolute = valueUSD - costBasisUSD;
+  const unrealizedPnl = valueUSD - costBasisUSD;
+  const pnlAbsolute = unrealizedPnl + realizedPnl;
 
   // ARS-priced assets ignore the blue rate's own 24h move
   const change24h = price?.change24h ?? null;
@@ -168,10 +177,18 @@ export function computeHoldingPnl(
     valueUSD,
     valueARS: valueUSD * dolarBlueVenta,
     costBasisUSD,
+    unrealizedPnl,
+    realizedPnl,
     pnlAbsolute,
-    pnlPct: costBasisUSD > 0 ? (pnlAbsolute / costBasisUSD) * 100 : 0,
+    pnlPct: totalBoughtUSD > 0 ? (pnlAbsolute / totalBoughtUSD) * 100 : 0,
     change24hUSD,
   };
+}
+
+// Price at which the whole position, sales included, nets to zero; in cost currency
+export function breakEvenPrice(holding: Holding): number {
+  if (holding.quantity === 0) return 0;
+  return Math.max(0, holding.avgCostPerUnit - holding.realizedPnl / holding.quantity);
 }
 
 export interface PortfolioTotals {
@@ -199,8 +216,8 @@ export function computePortfolioTotals(
   let realizedPnl = 0;
   let change24hUSD = 0;
 
-  // Total P&L = sum of the per-row P&L shown in HoldingsTable:
-  // unrealized for open positions, realized for closed ones.
+  // Total P&L = sum of the per-row P&L shown in HoldingsTable. The % keeps
+  // today's cost base: summing every buy would double-count stablecoin legs.
   for (const h of holdings) {
     const price = priceMap.get(holdingKey(h));
     if (h.quantity > 0 && !price) continue;
@@ -210,12 +227,9 @@ export function computePortfolioTotals(
     totalCostBasisUSD += pnl.costBasisUSD;
     change24hUSD += pnl.change24hUSD;
 
-    if (pnl.isClosed) {
-      realizedPnl += pnl.pnlAbsolute;
-    } else {
-      investedUSD += pnl.costBasisUSD;
-      unrealizedPnl += pnl.pnlAbsolute;
-    }
+    unrealizedPnl += pnl.unrealizedPnl;
+    realizedPnl += pnl.realizedPnl;
+    if (!pnl.isClosed) investedUSD += pnl.costBasisUSD;
   }
 
   const pnlAbsolute = unrealizedPnl + realizedPnl;

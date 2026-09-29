@@ -134,8 +134,16 @@
     "allocationByAsset": "Distribucion por activo",
     "allocationByCategory": "Distribucion por categoria",
     "performance": "Rendimiento por activo",
-    "performanceHint": "No realizada en posiciones abiertas, realizada en cerradas",
-    "others": "Otros"
+    "performanceHint": "No realizada + realizada de cada activo",
+    "others": "Otros",
+    "myPosition": "Mi posicion",
+    "breakEven": "Equilibrio",
+    "breakEvenHint": "Precio al que la posicion, contando lo que ya vendiste, queda en cero",
+    "sellSimulator": "Si vendes hoy",
+    "simUnits": "{quantity} {symbol} al precio actual",
+    "simProceeds": "Cobras",
+    "simGain": "Ganancia de la venta",
+    "simRealizedAfter": "Realizada total"
   },
   "attribution": {
     "cryptoPrices": "Precios de crypto provistos por <link>CoinGecko</link>"

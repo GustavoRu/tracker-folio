@@ -72,7 +72,7 @@ export function HoldingsTable({
       change24h: price?.change24h ?? null,
       badgeStyle:
         CATEGORY_BADGE_STYLES[h.category] ?? "bg-muted text-muted-foreground",
-      isGain: pnl.isClosed ? pnl.pnlAbsolute >= 0 : pnl.pnlPct >= 0,
+      isGain: pnl.pnlAbsolute >= 0,
       ...pnl,
     };
   });

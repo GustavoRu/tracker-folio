@@ -134,8 +134,16 @@
     "allocationByAsset": "Allocation by asset",
     "allocationByCategory": "Allocation by category",
     "performance": "Performance by asset",
-    "performanceHint": "Unrealized on open positions, realized on closed ones",
-    "others": "Others"
+    "performanceHint": "Unrealized + realized per asset",
+    "others": "Others",
+    "myPosition": "My position",
+    "breakEven": "Break-even",
+    "breakEvenHint": "Price at which the position, counting what you already sold, breaks even",
+    "sellSimulator": "If you sell today",
+    "simUnits": "{quantity} {symbol} at the current price",
+    "simProceeds": "You receive",
+    "simGain": "Gain on this sale",
+    "simRealizedAfter": "Total realized"
   },
   "attribution": {
     "cryptoPrices": "Crypto price data by <link>CoinGecko</link>"
